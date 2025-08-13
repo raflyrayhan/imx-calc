@@ -1,103 +1,165 @@
-import Image from "next/image";
+// app/page.tsx
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
+
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.32, ease: "easeOut" } }
+};
+
+const card = {
+  rest: { y: 0, boxShadow: "0 1px 0 rgba(15,23,42,0.04)" },
+  hover: {
+    y: -3,
+    boxShadow: "0 12px 24px rgba(15,23,42,0.08)",
+    transition: { type: "spring", stiffness: 250, damping: 18 }
+  }
+};
+
+export default function HomePage() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="relative min-h-screen bg-white dark:bg-slate-950">
+      {/* subtle tech grid bg */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(100%_60%_at_50%_0%,black,transparent)]"
+      >
+        <div className="h-full w-full bg-[linear-gradient(to_right,rgba(2,6,23,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(2,6,23,0.05)_1px,transparent_1px)] bg-[size:24px_24px] dark:opacity-60"></div>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      {/* Intro */}
+      <motion.section
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="relative z-10 mx-auto max-w-6xl px-4 pt-20 pb-12 text-center"
+      >
+        <motion.h1
+          variants={item}
+          className="text-4xl md:text-5xl font-semibold tracking-tight text-slate-900 dark:text-white"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Engineering Tools
+        </motion.h1>
+        <motion.p
+          variants={item}
+          className="mx-auto mt-4 max-w-2xl text-base md:text-lg leading-relaxed text-slate-600 dark:text-slate-300"
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          A focused suite of engineering calculators and selectors for daily design work.
+          Pick a collection to begin.
+        </motion.p>
+      </motion.section>
+
+      {/* Cards: equal height via auto-rows-fr + h-full flex cards */}
+      <section className="relative z-10 mx-auto grid max-w-5xl grid-cols-1 auto-rows-fr gap-6 px-4 pb-20 md:grid-cols-2">
+        <MotionCard
+          href="/piping"
+          title="Piping Calculations"
+          subtitle="Fluid flow, heat transfer, equipment sizing, properties, and more—organized by topic."
+        />
+        <MotionCard
+          href="/cfdpage"
+          title="CFD Calculations"
+          subtitle="Solver selection, complexity estimation, and airflow/thermal calculators."
+          accent="indigo"
+        />
+      </section>
+
+      {/* bottom fade */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-100/80 to-transparent dark:from-slate-900/60"
+      />
+    </main>
+  );
+}
+
+function MotionCard({
+  href,
+  title,
+  subtitle,
+  accent = "blue",
+}: {
+  href: string;
+  title: string;
+  subtitle: string;
+  accent?: "blue" | "indigo" | "sky" | "violet";
+}) {
+  const accentRing =
+    {
+      blue: "focus-visible:ring-blue-600",
+      indigo: "focus-visible:ring-indigo-600",
+      sky: "focus-visible:ring-sky-600",
+      violet: "focus-visible:ring-violet-600",
+    }[accent];
+
+  const accentBg =
+    {
+      blue: "bg-blue-600",
+      indigo: "bg-indigo-600",
+      sky: "bg-sky-600",
+      violet: "bg-violet-600",
+    }[accent];
+
+  const accentHover =
+    {
+      blue: "hover:bg-blue-700",
+      indigo: "hover:bg-indigo-700",
+      sky: "hover:bg-sky-700",
+      violet: "hover:bg-violet-700",
+    }[accent];
+
+  return (
+    <motion.div variants={item} className="h-full">
+      <motion.div
+        variants={card}
+        initial="rest"
+        whileHover="hover"
+        animate="rest"
+        className="group relative h-full rounded-2xl border border-slate-200 dark:border-slate-800
+                   bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8
+                   transition will-change-transform shadow-sm hover:shadow-md"
+      >
+        {/* subtle inner sheen */}
+        <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]" />
+
+        {/* content as flex column so CTA pins to bottom */}
+        <Link
+          href={href}
+          className={`block h-full outline-none focus-visible:ring-2 ${accentRing} focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950 rounded-xl`}
         >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <div className="flex h-full flex-col">
+            <div>
+              <h2 className="text-2xl font-medium tracking-tight text-slate-900 dark:text-white">
+                {title}
+              </h2>
+              <p className="mt-3 leading-relaxed text-slate-600 dark:text-slate-300">
+                {subtitle}
+              </p>
+            </div>
+
+            {/* CTA aligned bottom for perfect row alignment */}
+            <div className="mt-auto pt-6">
+              <span
+                className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors ${accentBg} ${accentHover}`}
+              >
+                Enter
+                <ArrowRight className="h-4 w-4 text-white/90" />
+              </span>
+            </div>
+          </div>
+        </Link>
+
+        {/* hover ring */}
+        <div className="pointer-events-none absolute inset-0 rounded-2xl ring-0 group-hover:ring-2 group-hover:ring-blue-500/30 dark:group-hover:ring-blue-500/25 transition" />
+      </motion.div>
+    </motion.div>
   );
 }
