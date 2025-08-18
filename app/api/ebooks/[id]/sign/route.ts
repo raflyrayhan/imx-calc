@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";                 // ✅
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const prisma = new PrismaClient();
+// ❌ REMOVE: import { PrismaClient } from "@prisma/client";
+// ❌ REMOVE: const prisma = new PrismaClient();
+
 const EBOOKS_BUCKET = process.env.NEXT_PUBLIC_EBOOKS_BUCKET || "ebooks";
 
 async function findByIdOrSlug(idOrSlug: string) {
