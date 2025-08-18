@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { PrismaClient } from "@prisma/client";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
