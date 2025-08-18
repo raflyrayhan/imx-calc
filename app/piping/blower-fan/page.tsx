@@ -1,4 +1,4 @@
-// app/cfd/blower-fan/page.tsx
+// page.tsx
 "use client";
 
 import { useMemo, useState, ChangeEvent } from "react";
@@ -13,8 +13,8 @@ import {
 import { blowerFanPdfAdapter } from "@/lib/pdf-adapters/blower-fan";
 
 const fadeIn = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } },
+ hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.08 } },
 };
 const list = {
   hidden: { opacity: 0 },
@@ -33,7 +33,7 @@ export default function BlowerFanPage() {
 
   const inputCls =
     "w-full rounded-md border border-slate-300 dark:border-slate-700 " +
-    "bg-white dark:bg-slate-900/40 px-3 py-2 " +
+    "bg-white dark:bg-slate-900/10 px-3 py-2 " +
     "text-slate-900 dark:text-slate-100 placeholder-slate-400 " +
     "focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-500";
 
@@ -67,7 +67,7 @@ export default function BlowerFanPage() {
 
         {/* Doc meta */}
         <motion.section variants={fadeIn} initial="hidden" animate="show" className="mt-8">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm shadow-sm">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/10 backdrop-blur-sm shadow-sm">
             <DocMetaForm value={doc} onChange={(p) => setDoc((d) => ({ ...d, ...p }))} />
           </div>
         </motion.section>
@@ -176,13 +176,13 @@ export default function BlowerFanPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <button
-                className="w-full rounded-md border border-blue-600 bg-blue-600 text-white py-3 font-semibold hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full rounded-md border border-blue-600 bg-blue-600/20 text-white py-3 font-semibold hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 onClick={() => setForm({ ...form })}
               >
                 Recalculate
               </button>
               <button
-                className="w-full rounded-md border border-blue-600 bg-white text-blue-700 dark:bg-slate-900 dark:text-blue-400 py-3 font-semibold hover:bg-blue-50 dark:hover:bg-slate-900/60 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full rounded-md border border-indigo-600 bg-white text-blue-700 dark:bg-slate-900/10 dark:text-blue-400 py-3 font-semibold hover:bg-blue-50 dark:hover:bg-slate-900/60 focus:outline-none focus:ring-2 focus:ring-blue-600"
                 onClick={() =>
                   printCalculationPdf(blowerFanPdfAdapter, form, R, {
                     description: notes,
@@ -195,7 +195,7 @@ export default function BlowerFanPage() {
             </div>
 
             {R.warnings.length > 0 && (
-              <div className="rounded-lg border border-amber-300/60 bg-amber-50 text-amber-900 p-4 dark:bg-amber-900/20 dark:text-amber-200 dark:border-amber-600/40">
+              <div className="rounded-lg border border-amber-300/60 bg-amber-50 text-amber-900 p-4 dark:bg-amber-900/10 dark:text-amber-200 dark:border-amber-600/40">
                 <ul className="list-disc pl-5 text-sm space-y-1">
                   {R.warnings.map((w, i) => (
                     <li key={i}>{w}</li>
@@ -240,7 +240,7 @@ function Field(props: { label: string; children: React.ReactNode }) {
 }
 function Card(props: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 md:p-6 bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm shadow-sm">
+    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 md:p-6 bg-white/80 dark:bg-slate-900/10 backdrop-blur-sm shadow-sm">
       <h3 className="mb-4 text-base md:text-lg font-semibold text-slate-900 dark:text-white">{props.title}</h3>
       <div className="space-y-3">{props.children}</div>
     </div>
@@ -248,7 +248,7 @@ function Card(props: { title: string; children: React.ReactNode }) {
 }
 function Unit({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-3 text-slate-700 dark:text-slate-200">
+    <div className="flex items-center justify-center rounded-md border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/10 px-3 text-slate-700 dark:text-slate-200">
       {children}
     </div>
   );

@@ -1,0 +1,31 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Ebook {
+  id         String     @id @default(cuid())
+  slug       String     @unique
+  title      String
+  author     String?
+  year       Int?
+  pages      Int?
+  sizeBytes  BigInt?
+  tags       String[]   // quick start; switch to a M2M table if you need tag analytics
+  fileKey    String     // "ebooks/<slug>/v0001/book.pdf"
+  coverKey   String?    // "ebook-covers/<slug>.jpg"
+  visibility Visibility @default(PRIVATE)
+  version    Int        @default(1)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}

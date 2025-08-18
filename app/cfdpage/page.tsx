@@ -1,4 +1,3 @@
-// app/cfd/page.tsx
 "use client";
 
 import Link from "next/link";
@@ -10,13 +9,13 @@ const container = {
   show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.08 } },
 };
 const item = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } },
+hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.08 } },
 };
 
 export default function CfdPage() {
   return (
-    <main className="relative min-h-screen bg-white dark:bg-slate-950">
+    <main className="min-h-screen">
       {/* subtle tech grid bg */}
       <div
         aria-hidden
@@ -29,95 +28,84 @@ export default function CfdPage() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="relative z-10 mx-auto max-w-6xl px-4 pt-16 pb-10 text-center"
+        className="relative z-10 mx-auto max-w-9xl px-4 pt-16 pb-10 text-center"
       >
         <motion.h1
           variants={item}
-          className="text-3xl md:text-4xl font-semibold tracking-tight text-slate-900 dark:text-white"
+          className="text-3xl md:text-4xl font-semibold tracking-tight"
         >
           CFD Calculations
         </motion.h1>
         <motion.p
           variants={item}
-          className="mx-auto mt-3 max-w-3xl text-slate-600 dark:text-slate-300"
+          className="mx-auto mt-3 max-w-screen"
         >
           Solver selection, complexity estimation, and airflow/thermal calculators.
         </motion.p>
       </motion.section>
 
-      {/* Cards: equal height via auto-rows-fr + h-full flex card */}
+      {/* Card list */}
       <motion.section
         variants={container}
         initial="hidden"
         animate="show"
-        className="relative z-10 mx-auto grid max-w-5xl grid-cols-1 auto-rows-fr gap-6 px-4 pb-20 sm:grid-cols-2"
+        className="relative z-5 max-w-6xl"
       >
-        {CFD_TOOLS.map((t, i) => {
-          const to = typeof t.href === "string" && t.href.trim() ? t.href : undefined;
-          const disabled = !to;
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-1 w-screen">
+          {CFD_TOOLS.map((t, i) => {
+            const to = typeof t.href === "string" && t.href.trim() ? t.href : undefined;
+            const disabled = !to;
 
-          const Body = (
-            <div className="flex h-full flex-col">
-              <div>
-                <div className="text-lg md:text-xl font-medium text-slate-900 dark:text-white">
-                  {t.title}
-                </div>
-                {t.description && (
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                    {t.description}
-                  </p>
-                )}
-              </div>
-              <div className="mt-auto pt-5">
-                <span
-                  className={[
-                    "inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold",
-                    disabled
-                      ? "text-slate-400 dark:text-slate-500 bg-slate-200/60 dark:bg-slate-800/60 cursor-not-allowed"
-                      : "text-white bg-indigo-600 hover:bg-indigo-700",
-                  ].join(" ")}
-                >
-                  {disabled ? "Coming soon" : "Open"}
-                  {!disabled && (
-                    <svg
-                      className="size-4 translate-x-0 group-hover:translate-x-0.5 transition-transform"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path d="M7.5 4.5a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 1 1-1.4-1.4L11.59 11H4a1 1 0 1 1 0-2h7.59L7.5 5.9a1 1 0 0 1 0-1.4Z" />
-                    </svg>
-                  )}
-                </span>
-              </div>
-            </div>
-          );
-
-          return (
-            <motion.div key={to ?? `disabled-${i}`} variants={item} className="h-full">
+            const Body = (
               <div
-                className={[
-                  "group h-full rounded-2xl border border-slate-200 dark:border-slate-800",
-                  "bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm p-6 md:p-8",
-                  "shadow-sm", disabled ? "" : "hover:shadow-md",
-                  "ring-0", disabled ? "" : "hover:ring-2 hover:ring-indigo-500/30 dark:hover:ring-indigo-500/25",
-                  "transition",
-                ].join(" ")}
-                aria-disabled={disabled}
+                className="flex flex-col border-b border-slate-200 dark:border-slate-700
+                            dark:hover:underline transition duration-200"
               >
+                <div className="px-6 py-4">
+                  <div className="text-lg font-medium">{t.title}</div>
+                  {t.description && (
+                    <p className="text-sm mt-1">{t.description}</p>
+                  )}
+                </div>
+                <div className="px-6 py-2">
+                  <span
+                    className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold ${
+                      disabled
+                        ? "text-slate-400 bg-slate-200/60 dark:bg-slate-800/60"
+                        : "text-white bg-indigo-600 hover:bg-indigo-700"
+                    }`}
+                  >
+                    {disabled ? "Coming soon" : "Open"}
+                    {!disabled && (
+                      <svg
+                        className="size-4 translate-x-0 group-hover:translate-x-0.5 transition-transform"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path d="M7.5 4.5a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 1 1-1.4-1.4L11.59 11H4a1 1 0 1 1 0-2h7.59L7.5 5.9a1 1 0 0 1 0-1.4Z" />
+                      </svg>
+                    )}
+                  </span>
+                </div>
+              </div>
+            );
+
+            return (
+              <motion.div key={to ?? `disabled-${i}`} variants={item} className="h-full">
                 {disabled ? (
-                  <div className="h-full cursor-not-allowed opacity-75">{Body}</div>
+                  <div className="cursor-not-allowed opacity-75">{Body}</div>
                 ) : (
                   <Link
                     href={to}
-                    className="block h-full outline-none rounded-lg focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950"
+                    className="block h-full outline-none rounded-lg focus-visible:ring-2 focus-visible:ring-indigo-600"
                   >
                     {Body}
                   </Link>
                 )}
-              </div>
-            </motion.div>
-          );
-        })}
+              </motion.div>
+            );
+          })}
+        </div>
       </motion.section>
 
       {/* bottom fade */}

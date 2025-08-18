@@ -27,6 +27,11 @@ export const PIPING_CATEGORIES: Category[] = [
         { title: "Compressible Fluid Flow", href: "/piping/compressible-flow" },
         { title: "Power Law Fluid", href: "/piping/power-law" },
         { title: "Blower & Fan Calculation", href: "/piping/blower-fan" },
+        { title: "Natural Gas Pipeline Sizing", href: "/piping/natural-gas-pipeline" },
+        { title: "Two-Phase Flow", href: "/piping/two-phase-flow" },
+        { title: "Pump Sizing", href: "/piping/pump-sizing" },
+        { title: "Compressor Rating", href: "/piping/compressor-rating" },
+        { title: "Pressure Drop in Pipe & Fittings", href: "/piping/pressure-drop" },
       // Add tools as you build them, for example:
       // { title: "Single-Phase Pressure Drop", href: "/piping/pressure-drop" },
     ],
@@ -39,6 +44,7 @@ export const PIPING_CATEGORIES: Category[] = [
       "Double pipe exchanger, air-cooled exchanger, LMTD calculation, correction factors, insulation heat loss and jacketed vessel heat transfer.",
     items: [
       { title: "Heat Exchanger Rating", href: "/piping/heat-exchanger-rating" },
+      { title: "Heat Exchanger Analysis (ε-NTU)", href: "/piping/heat-exchanger-analysis" },
     ],
   },
   {

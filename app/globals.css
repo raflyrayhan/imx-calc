@@ -1,26 +1,43 @@
+/* globals.css */
 @import "tailwindcss";
 
+/* Light-mode background for EVERY div/element */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+   --foreground: #000000;   /* light mode */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark mode kept untouched */
+.dark {
+  --background: #0a0a0a;
+--foreground: #ededed;   /* dark mode */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
+body,
+div,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+input,
+select,
+textarea,
+span,
+button {
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Force ALL divs to inherit the variable (white in light) */
+div {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* Allow overrides when you DO want transparent / none */
+div.bg-transparent,
+div.bg-none {
+  background-color: transparent;
 }
