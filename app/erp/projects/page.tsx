@@ -1,7 +1,7 @@
 // app/analytics/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 type ProjectDash = {
@@ -10,7 +10,7 @@ type ProjectDash = {
   name: string;
   status?: "Planning" | "On-Going" | "Hold" | "Closed";
   iframeSrc: string;
-  height?: number; 
+  height?: number;
 };
 
 const PROJECTS: ProjectDash[] = [
@@ -45,7 +45,18 @@ const PROJECTS: ProjectDash[] = [
 
 type LayoutMode = "sidebar" | "top";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function EpcErpAnalyticsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-slate-600">Loading dashboards…</div>}>
+      <AnalyticsContent />
+    </Suspense>
+  );
+}
+
+function AnalyticsContent() {
   const router = useRouter();
   const params = useSearchParams();
 
@@ -80,10 +91,11 @@ export default function EpcErpAnalyticsPage() {
   );
 
   const updateUrl = (next: Partial<{ project: string; layout: LayoutMode }>) => {
-    const url = new URL(window.location.href);
-    if (next.project) url.searchParams.set("project", next.project);
-    if (next.layout) url.searchParams.set("layout", next.layout);
-    router.replace(url.toString(), { scroll: false });
+    // build a new query string from current params
+    const sp = new URLSearchParams(Array.from(params.entries()));
+    if (next.project) sp.set("project", next.project);
+    if (next.layout) sp.set("layout", next.layout);
+    router.replace(`?${sp.toString()}`, { scroll: false });
   };
 
   const pickProject = (id: string) => {
