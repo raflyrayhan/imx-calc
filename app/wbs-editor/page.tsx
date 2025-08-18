@@ -4,19 +4,10 @@
 
 "use client";
 
-// polyfill buat mobile browsers yang tidak punya crypto.randomUUID()
-// Ini dijalankan di client sebelum komponen dieksekusi.
-// Jika crypto.randomUUID sudah ada, tidak akan ada yang berubah.
-// tulung...........
-declare global {
-  interface Crypto {
-    randomUUID?: () => string;
-  }
-}
-
+// ✅ Runtime polyfill without touching TypeScript types
 (function ensureRandomUUID() {
   if (typeof window === "undefined") return;
-  const c = window.crypto as Crypto | undefined;
+  const c = (window as any).crypto as any;
   if (!c || typeof c.randomUUID === "function") return;
 
   const bytesToHex = (b: Uint8Array) =>
@@ -30,9 +21,9 @@ declare global {
             Array.from({ length: 16 }, () => Math.floor(Math.random() * 256))
           );
 
-    // RFC 4122 version/variant bits
-    b[6] = (b[6] & 0x0f) | 0x40; // version 4
-    b[8] = (b[8] & 0x3f) | 0x80; // variant
+    // RFC 4122 version/variant bits (v4)
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
 
     const hex = bytesToHex(b);
     return (
@@ -44,6 +35,21 @@ declare global {
     );
   };
 })();
+
+// Helper that works with/without native support
+function uuid(): string {
+  // Browser crypto if available
+  try {
+    const maybe = (globalThis as any).crypto?.randomUUID;
+    if (typeof maybe === "function") return maybe();
+  } catch {}
+  // Fallback (non-crypto)
+  const rnd = () =>
+    Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  return `${rnd()}${rnd()}-${rnd()}-${rnd()}-${rnd()}-${rnd()}${rnd()}${rnd()}`;
+}
 
 import { useEffect, useMemo, useState } from "react";
 import ProjectBar from "../../components/ProjectBar";
@@ -62,14 +68,14 @@ function safeParseProject(s: string | null): Project | null {
 }
 
 export default function Home() {
-  // default (no storage access in render)
-  const [project, setProject] = useState<Project>({
-    id: crypto.randomUUID(), // <-- uses polyfill if needed
+  // Use lazy initializer and uuid() helper
+  const [project, setProject] = useState<Project>(() => ({
+    id: uuid(),
     name: "Untitled",
     items: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-  });
+  }));
 
   // gate to avoid saving before we've loaded
   const [loaded, setLoaded] = useState(false);
@@ -108,7 +114,10 @@ export default function Home() {
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         <header className="space-y-1">
           <h1 className="text-3xl md:text-4xl font-extrabold">S-Curve and Weight Factor Generator</h1>
-          <div className="text-sm opacity-80">(beta v0.1) <br/>(Calculations may give an unbalanced results. Consider using this app for reference and further R&D)</div>
+          <div className="text-sm opacity-80">
+            (beta v0.1) <br />
+            (Calculations may give an unbalanced results. Consider using this app for reference and further R&amp;D)
+          </div>
           <div className="pt-2">
             <ProjectBar onLoad={(p) => setProject(p)} />
           </div>
