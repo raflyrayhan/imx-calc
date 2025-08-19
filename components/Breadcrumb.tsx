@@ -2,81 +2,141 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Moon, Sun } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, X } from "lucide-react";
 
 const NAV = [
   { label: "Home", href: "/" },
   { label: "E-books", href: "/ebook" },
   { label: "Links", href: "/links" },
-  { label: "Calculator & Tools", href: "/tools" }, // consolidated
+  { label: "Calculator & Tools", href: "/tools" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname() || "/";
-  const [darkMode, setDarkMode] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [open, setOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
-  // Mount flag prevents SSR/CSR mismatches for theme + active states
+  // Prevent hydration mismatch for active states
+  useEffect(() => setMounted(true), []);
+
+  // Close the mobile menu on route change
   useEffect(() => {
-    setMounted(true);
-    const saved = typeof window !== "undefined" ? localStorage.getItem("theme") : null;
-    const prefers =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    if (!mounted) return;
+    setOpen(false);
+  }, [pathname, mounted]);
 
-    const startDark = saved ? saved === "dark" : !!prefers;
-    setDarkMode(startDark);
-    document.documentElement.classList.toggle("dark", startDark);
-  }, []);
+  // Lock body scroll when menu is open
+  useEffect(() => {
+    if (open) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [open]);
 
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => {
-      const next = !prev;
-      if (typeof window !== "undefined") {
-        localStorage.setItem("theme", next ? "dark" : "light");
-      }
-      document.documentElement.classList.toggle("dark", next);
-      return next;
-    });
-  };
+  // Click outside to close (mobile)
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (!panelRef.current) return;
+      if (!panelRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-40 bg-white/70 dark:bg-slate-900/60 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+    <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4">
         <div className="h-14 flex items-center justify-between gap-3">
-          {/* Left: Logo + Nav */}
+          {/* Left: Logo */}
           <div className="flex items-center min-w-0">
             <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="Go to Home">
               <Image
-                src="/imx-logo-nb.png"        // ← replace with your logo path
+                src="/imx-logo-nb.png" // ← your logo path
                 alt="Brand logo"
-                width={32}
-                height={32}
+                width={36}
+                height={36}
                 priority
                 className="h-9 w-9 object-contain"
               />
             </Link>
+          </div>
 
-            <nav aria-label="Main navigation" className="ml-6">
-              <ul className="flex flex-wrap items-center gap-5 text-sm">
+          {/* Desktop nav */}
+          <nav aria-label="Main navigation" className="hidden md:block">
+            <ul className="flex items-center gap-6 text-sm">
+              {NAV.map((item) => {
+                const active = mounted && isActive(item.href);
+                return (
+                  <li key={item.href} className="shrink-0">
+                    <Link
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={[
+                        "px-2 py-1 rounded-md transition",
+                        active
+                          ? "font-semibold text-slate-900 bg-slate-100"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70",
+                      ].join(" ")}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            className="md:hidden inline-flex items-center justify-center rounded-md p-2 hover:bg-slate-100 transition"
+            aria-label="Open menu"
+            aria-controls="mobile-menu"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile overlay + panel */}
+      {open && (
+        <>
+          {/* Clickable overlay */}
+          <div
+            className="fixed inset-0 z-30 bg-black/20"
+            aria-hidden="true"
+            onClick={() => setOpen(false)}
+          />
+          {/* Panel */}
+          <div
+            ref={panelRef}
+            id="mobile-menu"
+            className="absolute inset-x-0 top-14 z-40 md:hidden"
+          >
+            <nav className="mx-4 rounded-xl border border-slate-200 bg-white shadow-lg">
+              <ul className="py-2">
                 {NAV.map((item) => {
                   const active = mounted && isActive(item.href);
                   return (
-                    <li key={item.href} className="shrink-0">
+                    <li key={item.href}>
                       <Link
                         href={item.href}
-                        aria-current={active ? "page" : undefined}
                         className={[
-                          "px-2 py-1 rounded-md transition",
+                          "block px-4 py-3 text-sm rounded-lg mx-1",
                           active
-                            ? "font-semibold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800"
-                            : "text-slate-600 hover:text-slate-900 dark:text-slate-600 dark:hover:text-white hover:bg-slate-100/70 dark:hover:bg-slate-800/70",
+                            ? "font-semibold text-slate-900 bg-slate-100"
+                            : "text-slate-700 hover:bg-slate-100",
                         ].join(" ")}
                       >
                         {item.label}
@@ -87,21 +147,8 @@ export default function Navbar() {
               </ul>
             </nav>
           </div>
-
-          {/* Right: Theme toggle */}
-          <button
-            title="Toggle dark mode"
-            onClick={toggleDarkMode}
-            className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition"
-          >
-            {mounted && (darkMode ? (
-              <Sun className="h-5 w-5 text-yellow-500" />
-            ) : (
-              <Moon className="h-5 w-5 text-slate-600" />
-            ))}
-          </button>
-        </div>
-      </div>
+        </>
+      )}
     </header>
   );
 }
