@@ -6,6 +6,8 @@
   --background: #ffffff;
    --foreground: #000000;   /* light mode */
 }
+html { scroll-behavior: smooth; }
+
 
 /* Dark mode kept untouched */
 .dark {

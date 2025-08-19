@@ -15,77 +15,58 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.28 } },
 };
 
-type Section = {
+type Feature = {
   href: string;
   title: string;
   blurb: string;
-  image: string;
+  image: string; // reuse same picture files
   cta: string;
   accent: string;
   imageFit?: "cover" | "contain";
 };
 
-const sections: Section[] = [
+const homeFeatures: Feature[] = [
   {
     href: "/erp/projects",
     title: "EPC Project Dashboard",
     blurb:
-      "Compact Control for EPC: document control with status tracking & charts, project control with tasks/schedule, per-task attachments, memos, and Minutes-of-Meeting templates.",
+      "Streamline execution with status-tracked documents, approvals, attachments, tasks & schedules, MoM templates, and real-time dashboards.",
     image: "/images/dashboard.png",
     cta: "Open Dashboard",
     accent: "bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-600",
     imageFit: "contain",
   },
   {
-    href: "/piping",
-    title: "Piping Calculations",
+    href: "/tools",
+    title: "Calculator & Tools",
     blurb:
-      "From pressure drops and pump power to heat transfer, properties, and sizing. Built to speed up everyday design work with consistent, unit-aware inputs.",
-    image: "/images/piping.webp",
-    cta: "Open calculators",
-    accent: "bg-sky-600 text-white hover:bg-sky-700 focus-visible:ring-sky-600",
-  },
-  {
-    href: "/cfdpage",
-    title: "CFD Calculations",
-    blurb:
-      "Quick helpers for solver selection, complexity estimation, airflow/thermal checks, and setup guidance. Build to scope work before setting up a case.",
+      "Tools for everyday engineering tasks: CFD, piping, WBS editor, and more. Fast, unit-aware, and consistent inputs.",
     image: "/images/cfd.png",
-    cta: "Explore CFD tools",
+    cta: "Explore Tools",
     accent: "bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-indigo-600",
-  },
-  {
-    href: "/wbs-editor",
-    title: "S-Curve & Weight Factor Generator (Test)",
-    blurb:
-      "Build work-breakdown structures, set windows, and generate planned/actual S-curves. Weight factors are computed automatically from durations so planning stays consistent.",
-    image: "/images/scurve.jpg",
-    cta: "Open S-Curve tool",
-    accent: "bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600",
   },
   {
     href: "/ebook",
     title: "E-Book Library",
     blurb:
-      "Colection of engineering e-books. All in PDF format, with cover images, metadata, and tags for easy browsing.",
+      "Collection of engineering e-books with search, tags, and quick access.",
     image: "/images/ebooklibrary.jpg",
     cta: "Open E-Books",
-    accent: "bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:ring-indigo-600",
+    accent: "bg-sky-600 text-white hover:bg-sky-700 focus-visible:ring-sky-600",
   },
   {
     href: "/links",
     title: "Important Links & References",
-    blurb: "Reference links for engineering work. Bookmarkable with title, description, tags, and quick actions.",
+    blurb:
+      "Reference links to essential resources, tools, and communities for engineers.",
     image: "/images/link.png",
     cta: "Open Links",
-    accent: "bg-violet-600 text-white hover:bg-violet-700 focus-visible:ring-violet-600",
+    accent: "bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600",
   },
 ];
 
 export default function HomePage() {
-  const featured =
-    sections.find((s) => s.href.startsWith("/erp")) ?? sections[0];
-  const tools = sections.filter((s) => s.href !== featured.href);
+  const featured = homeFeatures[0];
 
   return (
     <main className="relative min-h-screen flex flex-col">
@@ -113,18 +94,18 @@ export default function HomePage() {
         >
           <span className="text-indigo-700 dark:text-indigo-600 font-extrabold">IMX</span>{" "}
           Engineering Portal{" "}
-          <span className="text-slate-500 dark:text-slate-400 text-sm">(beta v0.1.2)</span>
+          <span className="text-slate-500 dark:text-slate-400 text-sm">(test build v0.1.3)</span>
         </motion.h1>
 
         <motion.p
           variants={fadeUp}
           className="mx-auto mt-4 max-w-2xl text-base md:text-lg leading-relaxed text-slate-700 dark:text-slate-300"
         >
-          A focused suite of engineering dashboard and tools.
+          A focused suite of engineering dashboards and tools.
         </motion.p>
 
         <motion.div variants={fadeUp} className="mt-6 flex items-center justify-center gap-3">
-         
+          
         </motion.div>
       </motion.section>
 
@@ -133,14 +114,14 @@ export default function HomePage() {
         <motion.div
           variants={container}
           initial="hidden"
-          whileInView="show"  
+          whileInView="show"
           viewport={{ once: true, amount: 0.2 }}
           className="grid items-center gap-6 md:gap-10 md:grid-cols-2"
         >
           {/* Copy */}
           <motion.div variants={fadeUp}>
             <h2 className="text-2xl md:text-3xl font-semibold text-slate-900 dark:text-slate-100">
-             EPC Project Dashboard — built for projects, documents, and control
+              EPC Project Dashboard — built for projects, documents, and control
             </h2>
             <p className="mt-3 text-slate-700 dark:text-slate-300 leading-relaxed">
               Streamline project execution: status-tracked documents, approvals, attachments,
@@ -155,7 +136,6 @@ export default function HomePage() {
               >
                 {featured.cta} <ArrowRight className="h-4 w-4" />
               </Link>
-            
             </div>
           </motion.div>
 
@@ -167,14 +147,16 @@ export default function HomePage() {
                 alt={featured.title}
                 width={900}
                 height={620}
-                className={featured.imageFit === "contain"
-                  ? "object-contain w-full h-[280px] md:h-[420px]"
-                  : "object-cover w-full h-auto"}
+                className={
+                  featured.imageFit === "contain"
+                    ? "object-contain w-full h-[280px] md:h-[420px]"
+                    : "object-cover w-full h-auto"
+                }
                 priority
               />
             </div>
 
-            {/* Mini stats / badges */}
+            {/* Mini badges */}
             <div className="mt-4 grid grid-cols-3 gap-3 text-center">
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/40 px-3 py-2">
                 <div className="text-xl font-semibold text-slate-900 dark:text-slate-100">Docs</div>
@@ -193,54 +175,45 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ALL TOOLS — card grid */}
-      <section id="tools" className="mx-auto w-full max-w-6xl px-4 pb-14">
-        <div className="mb-5 text-center">
-          <h3 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            Other tools & resources
-          </h3>
-          <p className="mt-1 text-slate-600 dark:text-slate-400">
-            Fast helpers that support daily engineering work.
-          </p>
-        </div>
-
-        <motion.div
-          variants={container}
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
-          className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-        >
-          {tools.map((t) => (
-            <motion.article
-              key={t.title}
-              variants={fadeUp}
-              className="group overflow-hidden rounded-2xl border border-slate-200 bg-white dark:bg-slate-900/40 hover:shadow-md transition"
-            >
-              <div className="relative h-40 w-full bg-slate-100">
-                <Image
-                  src={t.image}
-                  alt={t.title}
-                  fill
-                  className={t.imageFit === "contain" ? "object-contain p-6" : "object-cover"}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-              </div>
-              <div className="space-y-3 p-4">
-                <h4 className="font-semibold text-slate-900 dark:text-slate-100">{t.title}</h4>
-                <p className="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                  {t.blurb}
-                </p>
+      {/* HOME FEATURE SECTIONS (no “Other tools & resources”) */}
+      <section className="mx-auto w-full max-w-6xl px-4 pb-16 space-y-14">
+        {homeFeatures.slice(1).map((f, idx) => (
+          <motion.div
+            key={f.title}
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            className={`grid items-center gap-6 md:gap-10 md:grid-cols-2 ${
+              idx % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""
+            }`}
+          >
+            <motion.div variants={fadeUp}>
+              <h3 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{f.title}</h3>
+              <p className="mt-3 text-slate-700 dark:text-slate-300 leading-relaxed">{f.blurb}</p>
+              <div className="mt-6">
                 <Link
-                  href={t.href}
-                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold shadow-sm focus-visible:outline-none focus-visible:ring-2 ${t.accent}`}
+                  href={f.href}
+                  className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold shadow-sm focus-visible:outline-none focus-visible:ring-2 ${f.accent}`}
                 >
-                  {t.cta} <ArrowRight className="h-4 w-4" />
+                  {f.cta} <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
-            </motion.article>
-          ))}
-        </motion.div>
+            </motion.div>
+
+            <motion.div variants={fadeUp}>
+              <div className="rounded-2xl shadow-lg overflow-hidden bg-white dark:bg-slate-900/40">
+                <Image
+                  src={f.image}
+                  alt={f.title}
+                  width={900}
+                  height={620}
+                  className={f.imageFit === "contain" ? "object-contain w-full h-[260px] md:h-[380px]" : "object-cover w-full h-auto"}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        ))}
       </section>
 
       {/* Footer */}

@@ -97,12 +97,28 @@ const LINKS: Bookmark[] = [
     tags: ["Commissioning", "Assurance", "Engineering"],
   },
   {
-    id: "imx-calc",
-    url: "https://imx-calc.vercel.app/",
-    title: "IMX Engineering Portal",
-    description: "A focused suite of engineering dashboard and tools.",
-    image: "/images/imx-calc.png",
-    tags: ["IMX", "Engineering", "Tools"],
+    id: "epc-land",
+    url: "https://www.youtube.com/@EPCLand",
+    title: "EPC Land",
+    description: "EPC project management, execution, and engineering resources.",
+    image: "https://yt3.googleusercontent.com/XMI8bUIH7gl9IZ2fjlOB_iryqNjH8rgkz60Lf8Pb4_gcQ7wXQQ4yWlsDs1n2Zz9lRTe62heduA=s160-c-k-c0x00ffffff-no-rj",
+    tags: ["EPC", "Project Management", "Engineering"],
+  },
+  {
+    id: "know-chem",
+    url: "https://www.youtube.com/@KnowChem",
+    title: "KnowChem",
+    description: "Chemical engineering resources, tutorials, and discussions.",
+    image: "https://yt3.googleusercontent.com/ytc/AIdro_lBTJlF6s_jGAASUkAuf14-HssQqXz1VTQ58jU3hdXwOg=s160-c-k-c0x00ffffff-no-rj",
+    tags: ["Chemical Engineering", "Tutorials", "Resources"],
+  },
+  {
+    id: "engineering-tools",
+    url: "https://www.engineeringtoolbox.com/",
+    title: "Engineering Toolbox",
+    description: "Tools and resources for various engineering disciplines.",
+    image: "https://www.engineeringtoolbox.com/static/img/logo.jpg",
+    tags: ["Tools", "Resources", "Engineering"],
   }
 ];
 
@@ -165,7 +181,7 @@ export default function LinksPage() {
           Important <span className="text-indigo-700 dark:text-indigo-600 font-extrabold">Links</span>
         </motion.h1>
         <motion.p variants={fadeUp} className="mx-auto mt-4 max-w-2xl text-base md:text-lg leading-relaxed text-slate-700 dark:text-slate-300">
-          Bookmark bergaya Notion: favicon, judul, deskripsi, domain, tag, dan aksi cepat.
+          Links to essential resources, tools, and communities for engineers.
         </motion.p>
 
         {/* Quick CTA (optional) */}
@@ -283,7 +299,7 @@ export default function LinksPage() {
 
           {!filtered.length && (
             <div className="col-span-full rounded-md border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-              Tidak ada link yang cocok dengan filter.
+              No link matches your search criteria.
             </div>
           )}
         </motion.div>
