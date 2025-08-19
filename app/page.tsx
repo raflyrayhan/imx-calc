@@ -93,7 +93,7 @@ export default function HomePage() {
           className="text-4xl md:text-5xl font-semibold tracking-tight text-slate-900 dark:text-slate-100"
         >
           <span className="text-indigo-700 dark:text-indigo-600 font-extrabold">IMX</span>{" "}
-          Engineering Portal{" "}
+          Engineering Resources{" "}
           <span className="text-slate-500 dark:text-slate-400 text-sm">(test build v0.1.3)</span>
         </motion.h1>
 
@@ -220,7 +220,7 @@ export default function HomePage() {
       <footer className="mt-auto">
         <div className="mx-auto w-full max-w-6xl px-4 pt-8 pb-6 text-center text-sm text-slate-500 dark:text-slate-300">
           © {new Date().getFullYear()}{" "}
-          <strong className="text-indigo-700 dark:text-indigo-600">IMX</strong> Engineering Portal.
+          <strong className="text-indigo-700 dark:text-indigo-600">IMX</strong> Engineering Resources.
           All rights reserved | by{" "}
           <strong className="text-indigo-700 dark:text-indigo-600">Infimech</strong>
         </div>
