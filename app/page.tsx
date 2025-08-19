@@ -220,8 +220,8 @@ export default function HomePage() {
       <footer className="mt-auto">
         <div className="mx-auto w-full max-w-6xl px-4 pt-8 pb-6 text-center text-sm text-slate-500 dark:text-slate-300">
           © {new Date().getFullYear()}{" "}
-          <strong className="text-indigo-700 dark:text-indigo-600">IMX</strong> Engineering Resources.
-          All rights reserved | by{" "}
+          <strong className="text-indigo-700 dark:text-indigo-600">IMX</strong> Engineering Resources 
+           | by{" "}
           <strong className="text-indigo-700 dark:text-indigo-600">Infimech</strong>
         </div>
       </footer>

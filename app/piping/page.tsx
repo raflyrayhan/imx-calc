@@ -3,92 +3,157 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { PIPING_CATEGORIES } from "@/lib/catalog";
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.08 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
 };
-const item = {
-hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.08 } },
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.28 } },
+};
+
+type Cat = {
+  slug: string;
+  title: string;
+  description?: string;
+  items?: Array<{ title: string; slug?: string; href?: string }>;
 };
 
 export default function PipingPage() {
+  const [query, setQuery] = useState("");
+
+  const filtered: Cat[] = PIPING_CATEGORIES.filter((c) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      c.title.toLowerCase().includes(q) ||
+      (c.description && c.description.toLowerCase().includes(q))
+    );
+  });
+
   return (
-    <main className="min-h-screen">
-      {/* subtle grid – dark-transparent */}
+    <main className="relative min-h-screen flex flex-col">
+      {/* Subtle grid background (same style as Links page) */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0
+        className="pointer-events-none absolute inset-0 -z-10
                    bg-[linear-gradient(to_right,rgba(15,23,42,0.03)_1px,transparent_1px),
                         linear-gradient(to_bottom,rgba(15,23,42,0.03)_1px,transparent_1px)]
-                   dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),
-                             linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)]
                    bg-[size:24px_24px]"
       />
 
-      {/* Header */}
+      {/* Hero */}
       <motion.section
         variants={container}
         initial="hidden"
         animate="show"
-        className="relative z-10 mx-auto max-w-5xl px-4 pt-13 pb-10 text-center"
+        className="mx-auto w-full max-w-6xl px-4 pt-14 pb-6 text-center"
       >
-        <motion.h1 variants={item} className="text-3xl md:text-4xl font-semibold pt-[-2vh]">
-          Piping Calculations
+        <motion.h1
+          variants={fadeUp}
+          className="text-4xl md:text-5xl font-semibold tracking-tight text-slate-900"
+        >
+          Piping <span className="text-indigo-700 font-extrabold">Calculations</span>
         </motion.h1>
-        <motion.p variants={item} className="mx-auto mt-3 max-w-3xl">
+        <motion.p
+          variants={fadeUp}
+          className="mx-auto mt-4 max-w-2xl text-base md:text-lg leading-relaxed text-slate-700"
+        >
           Curated calculators and selectors for piping design—organized by topic.
         </motion.p>
       </motion.section>
 
-      {/* One-column list */}
-      <motion.section
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="relative z-10 max-w-screen pb-2"
-      >
-        <div className="grid grid-cols-1 gap-6">
-          {PIPING_CATEGORIES.map((c) => (
-            <motion.div
-              key={c.slug}
-              variants={item}
-              whileHover={{ y: -2 }}
-              transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            >
-              <Link
-                href={`/piping/${c.slug}`}
-                className="block outline-none rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-600"
+      {/* Filters (mirrors Links page layout) */}
+      <section className="mx-auto w-full max-w-6xl px-4 pb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Search categories…"
+              className="w-72 rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-600"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <div className="text-sm text-slate-600">
+            Total:{" "}
+            <span className="font-semibold text-slate-900">{filtered.length}</span>{" "}
+            categor{filtered.length === 1 ? "y" : "ies"}
+          </div>
+        </div>
+      </section>
+
+      {/* Notion-style cards (same card pattern as Links) */}
+      <section className="mx-auto w-full max-w-6xl px-4 pb-14">
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 gap-4 md:grid-cols-2"
+        >
+          {filtered.map((c) => {
+            const toolCount = c.items?.length ?? 0;
+
+            return (
+              <motion.article
+                key={c.slug}
+                variants={fadeUp}
+                className="group flex items-stretch overflow-hidden rounded-2xl border border-slate-200 bg-white hover:shadow-md transition"
               >
-                <div className="flex flex-col border-b border-slate-200 dark:border-slate-700
-                                hover:bg-indigo-50 dark:hover:bg-indigo-800/30 transition duration-200
-                                px-6 py-4">
-                  <h3 className="text-lg font-medium">{c.title}</h3>
-                  {c.description && (
-                    <p className="text-sm mt-1">{c.description}</p>
-                  )}
-                  <div className="mt-3">
-                    <span className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white bg-indigo-600">
-                      Explore
-                      <svg className="size-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M7.5 4.5a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 1 1-1.4-1.4L11.59 11H4a1 1 0 1 1 0-2h7.59L7.5 5.9a1 1 0 0 1 0-1.4Z" />
-                      </svg>
+                {/* Text-only card (no thumbnail for categories) */}
+                <div className="flex min-w-0 flex-1 flex-col p-4">
+                  <div className="mb-1 flex items-center gap-2">
+                    <Link
+                      href={`/piping/${c.slug}`}
+                      className="line-clamp-2 font-semibold text-slate-900 hover:underline"
+                      title={c.title}
+                    >
+                      {c.title}
+                    </Link>
+                  </div>
+
+                  <p className="mb-3 line-clamp-3 text-sm text-slate-600">
+                    {c.description ?? "No description provided."}
+                  </p>
+
+                  <div className="mt-auto flex flex-wrap items-center gap-2 text-xs">
+                    <span className="rounded bg-slate-100 px-2 py-1 text-slate-700">
+                      {toolCount} tool{toolCount === 1 ? "" : "s"}
+                    </span>
+
+                    <span className="ml-auto inline-flex items-center gap-1">
+                      <Link
+                        href={`/piping/${c.slug}`}
+                        className="rounded-md bg-indigo-600 px-2 py-1 text-white hover:bg-indigo-700"
+                        title="Open category"
+                      >
+                        Open
+                      </Link>
                     </span>
                   </div>
                 </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
-      </motion.section>
+              </motion.article>
+            );
+          })}
 
-      {/* bottom fade */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-100/80 to-transparent dark:from-slate-900/20"
-      />
+          {!filtered.length && (
+            <div className="col-span-full rounded-md border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
+              No category matches your search.
+            </div>
+          )}
+        </motion.div>
+      </section>
+
+      <footer className="mt-auto">
+        <div className="mx-auto w-full max-w-6xl px-4 pt-8 pb-6 text-center text-sm text-slate-500 dark:text-slate-300">
+          © 2025 <strong className="text-indigo-700 dark:text-indigo-600">IMX</strong> Calc.
+          All rights reserved.
+        </div>
+      </footer>
     </main>
   );
 }
