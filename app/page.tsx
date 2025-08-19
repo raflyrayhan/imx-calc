@@ -92,7 +92,7 @@ export default function HomePage() {
           variants={fadeUp}
           className="text-4xl md:text-5xl font-semibold tracking-tight text-slate-900 dark:text-slate-100"
         >
-          <span className="text-indigo-700 dark:text-indigo-600 font-extrabold">IMX</span>{" "}
+          <strong className="text-indigo-700 dark:text-indigo-600 font-extrabold">IMX</strong>{" "}
           Engineering Resources{" "}
           <span className="text-slate-500 dark:text-slate-400 text-sm">(test build v0.1.3)</span>
         </motion.h1>
