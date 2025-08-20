@@ -1,42 +1,52 @@
-// app/api/ebooks/route.ts
-import { NextResponse } from "next/server";
-import { Visibility } from "@prisma/client"; // ⬅️ Hapus import Category
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { NextRequest, NextResponse } from "next/server";
+import { Visibility } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
+/* ------------------------------------------------------------------ */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
-// Pakai bucket dari .env kamu
+/* ------------------------------------------------------------------ */
 const EBOOKS_BUCKET = process.env.NEXT_PUBLIC_EBOOKS_BUCKET || "E-books";
 const COVERS_BUCKET = process.env.NEXT_PUBLIC_EBOOK_COVERS_BUCKET || "ebook-covers";
 
-// Enum lokal agar tidak crash saat hot-reload/enum undefined
 const CATEGORY_VALUES = ["EBOOK", "DATASHEET", "STANDARD_DRAWING", "CODE_STANDARD"] as const;
 type CategoryValue = typeof CATEGORY_VALUES[number];
 
+/* ------------------------------------------------------------------ */
 function sanitize<T>(obj: T): T {
   return JSON.parse(
     JSON.stringify(obj, (_k, v) => (typeof v === "bigint" ? v.toString() : v))
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Ensure the buckets exist and set a very large limit.                */
+/*  If the bucket already exists with a smaller limit you must either   */
+/*  drop it via SQL:  DROP storage.buckets WHERE id='E-books';          */
+/*  or change it via SQL:                                               */
+/*  UPDATE storage.buckets SET file_size_limit = 1024 * 1024 * 1024;    */
+/* ------------------------------------------------------------------ */
 async function ensureBuckets() {
   const supabase = getSupabaseAdmin();
-  const make = async (name: string, publicBucket = false) => {
-    const { error } = await supabase.storage.createBucket(name, {
+  const upsertBucket = async (name: string, publicBucket = false) => {
+    const { data: exists } = await supabase.storage.getBucket(name);
+    if (exists) return;
+
+    await supabase.storage.createBucket(name, {
       public: publicBucket,
-      fileSizeLimit: "1024mb",
+      fileSizeLimit: "1024gb", // <— effectively unlimited
     });
-    if (error && !String(error.message || "").toLowerCase().includes("already exists")) {
-      throw error;
-    }
   };
-  await make(EBOOKS_BUCKET, false);
-  await make(COVERS_BUCKET, true);
+  await upsertBucket(EBOOKS_BUCKET, false);
+  await upsertBucket(COVERS_BUCKET, true);
 }
 
+/* ================================================================== */
+/*  GET  /api/ebooks                                                  */
+/* ================================================================== */
 export async function GET(req: Request) {
   try {
     const supabase = getSupabaseAdmin();
@@ -84,7 +94,6 @@ export async function GET(req: Request) {
       headers: { "Cache-Control": "private, max-age=30" },
     });
   } catch (err: any) {
-    // Tangani DB down/pooler issue dll.
     console.error("[GET /api/ebooks] error:", err?.message || err);
     const msg =
       err?.code === "P1001"
@@ -95,9 +104,15 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+/* ================================================================== */
+/*  POST  /api/ebooks                                                 */
+/*  - Vercel body limit removed via config below.                     */
+/*  - Files are streamed to Supabase, never buffered fully.           */
+/* ================================================================== */
+export async function POST(req: NextRequest) {
   try {
     await ensureBuckets();
+
     const supabase = getSupabaseAdmin();
     const form = await req.formData();
 
@@ -105,8 +120,7 @@ export async function POST(req: Request) {
     if (!title) return NextResponse.json({ error: "title required" }, { status: 400 });
 
     const author = (form.get("author") as string) || null;
-    const yearStr = (form.get("year") as string) || "";
-    const year = yearStr ? Number(yearStr) : null;
+    const year = Number(form.get("year") || "") || null;
 
     const tags = ((form.get("tags") as string) || "")
       .split(",")
@@ -119,10 +133,13 @@ export async function POST(req: Request) {
       : "EBOOK";
 
     const visibility = (form.get("visibility") as keyof typeof Visibility) || "PRIVATE";
+
     const pdf = form.get("pdf") as File | null;
     if (!pdf) return NextResponse.json({ error: "pdf file required" }, { status: 400 });
+
     const cover = form.get("cover") as File | null;
 
+    /* ---------- create slug ---------- */
     const slugify = (s: string) =>
       s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     const base = slugify(title);
@@ -136,30 +153,37 @@ export async function POST(req: Request) {
     const fileKey = `${finalSlug}/${vdir}/book.pdf`;
     const coverKey = cover ? `${finalSlug}.jpg` : null;
 
-    const pdfBuf = Buffer.from(await pdf.arrayBuffer());
-    const up1 = await supabase.storage.from(EBOOKS_BUCKET).upload(fileKey, pdfBuf, {
-      contentType: pdf.type || "application/pdf",
-      upsert: false,
-    });
-    if (up1.error) return NextResponse.json({ error: up1.error.message }, { status: 500 });
-
-    if (cover && coverKey) {
-      const coverBuf = Buffer.from(await cover.arrayBuffer());
-      const up2 = await supabase.storage.from(COVERS_BUCKET).upload(coverKey, coverBuf, {
-        contentType: cover.type || "image/jpeg",
-        upsert: true,
+    /* ---------- upload PDF (stream) ---------- */
+    const pdfStream = pdf.stream();
+    const { data: pdfData, error: pdfErr } = await supabase.storage
+      .from(EBOOKS_BUCKET)
+      .upload(fileKey, pdfStream, {
+        contentType: pdf.type || "application/pdf",
+        upsert: false,
       });
-      if (up2.error) return NextResponse.json({ error: up2.error.message }, { status: 500 });
+    if (pdfErr) return NextResponse.json({ error: pdfErr.message }, { status: 500 });
+
+    /* ---------- upload cover (stream) ---------- */
+    if (cover && coverKey) {
+      const coverStream = cover.stream();
+      const { error: coverErr } = await supabase.storage
+        .from(COVERS_BUCKET)
+        .upload(coverKey, coverStream, {
+          contentType: cover.type || "image/jpeg",
+          upsert: true,
+        });
+      if (coverErr) return NextResponse.json({ error: coverErr.message }, { status: 500 });
     }
 
+    /* ---------- save record ---------- */
     const created = await prisma.ebook.create({
       data: {
         slug: finalSlug,
         title,
         author: author || undefined,
-        year: year || undefined,
+        year,
         tags,
-        category: category as any, // enum di DB
+        category: category as any,
         sizeBytes: BigInt(pdf.size),
         fileKey,
         coverKey: coverKey || undefined,
