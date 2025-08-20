@@ -168,8 +168,7 @@ export default function PipingCategoryPage() {
         </motion.div>
       </div>
 
-      {/* Soft bottom fade */}
-     
+ 
       <footer className="mt-auto">
         <div className="mx-auto w-full max-w-6xl px-4 pt-8 pb-6 text-center text-sm text-slate-500 dark:text-slate-300">
           © 2025 <strong className="text-indigo-700 dark:text-indigo-600">IMX</strong> Calc.
