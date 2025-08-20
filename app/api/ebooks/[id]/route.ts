@@ -1,9 +1,9 @@
+// app/api/ebooks/[id]/route.ts
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";  // Make sure your prisma instance is correctly imported
+import { prisma } from "@/lib/prisma";  // Correct named import
 
-// Handle DELETE request to remove a specific ebook by ID
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const { id } = params;  // Destructure to get the ID from URL params
+  const { id } = params;  // Get the `id` from URL parameters
 
   try {
     // Check if the eBook exists before attempting deletion
