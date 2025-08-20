@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";  // Ensure your Prisma client is correctly imported
+import { prisma } from "@/lib/prisma";  // Ensure Prisma Client is correctly imported
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-// Constants for the Supabase storage buckets
+// Constants for Supabase storage buckets
 const EBOOKS_BUCKET = process.env.NEXT_PUBLIC_EBOOKS_BUCKET || "E-books";
 const COVERS_BUCKET = process.env.NEXT_PUBLIC_EBOOK_COVERS_BUCKET || "ebook-covers";
 
@@ -25,9 +25,9 @@ async function findByIdOrSlug(idOrSlug: string) {
 }
 
 // PATCH handler to update ebook data
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, context: { params: { id: string } }) {
   try {
-    const idOrSlug = decodeURIComponent(params.id || "").trim();
+    const idOrSlug = decodeURIComponent(context.params.id || "").trim();
     if (!idOrSlug) return NextResponse.json({ error: "Missing id or slug" }, { status: 400 });
 
     const row = await findByIdOrSlug(idOrSlug);
@@ -78,9 +78,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 }
 
 // DELETE handler to remove ebook data
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, context: { params: { id: string } }) {
   try {
-    const idOrSlug = decodeURIComponent(params.id || "").trim();
+    const idOrSlug = decodeURIComponent(context.params.id || "").trim();
     if (!idOrSlug) return NextResponse.json({ error: "Missing id or slug" }, { status: 400 });
 
     const row = await findByIdOrSlug(idOrSlug);
