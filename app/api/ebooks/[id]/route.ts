@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";  // Make sure your prisma instance is correctly imported
+import prisma from "@/lib/prisma";  // Make sure your prisma instance is correctly imported
 
 // Handle DELETE request to remove a specific ebook by ID
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
