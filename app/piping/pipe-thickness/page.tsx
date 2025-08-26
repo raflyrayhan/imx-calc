@@ -10,11 +10,12 @@ import {
   calculateMaxAllowablePressure,
   calculateHydrotestPressure,
   validateThickness,
-  pipeMaterials,            // ✅ ambil DB material
-  type PipeThicknessInput,  // ✅ tipe input yang diminta kalkulator
+  pipeMaterials,
+  type PipeThicknessInput,
 } from "@/lib/pipe-thickness-calculator";
 import { pipeThicknessPdfAdapter } from "@/lib/pdf-adapters/pipe-thickness";
-import { pipeSchedules } from "@/lib/pipe-schedule-db"; // biarkan seperti asal
+import type { PipeThicknessResult } from "@/lib/pdf-adapters/pipe-thickness";
+import { pipeSchedules } from "@/lib/pipe-schedule-db"; // gunakan DB schedule kamu
 
 const fadeIn: Variants = {
   hidden: { opacity: 0 },
@@ -27,17 +28,17 @@ export default function PipeThicknessCalculatorPage() {
     documentTitle: "Pipe Thickness Calculation",
   });
 
-  // ✅ ketik state sebagai PipeThicknessInput dan isi material pakai objek
+  // Form diketik sesuai kalkulator
   const [form, setForm] = useState<PipeThicknessInput>({
     designPressure: 400,            // psig
     designTemp: 120,                // °F
-    corrosionAllowance: 13,         // inches
+    corrosionAllowance: 13,         // in
     flangeRating: 900,              // lb
-    nps: 6,                         // inches (NPS)
-    requiredThickness: 0.432,       // inches
-    pipeSchedule: 80,               // schedule
-    nominalWallThickness: 0.432,    // inches
-    pipeMaterial: pipeMaterials["A 53 Gr.B"],
+    nps: 6,                         // in (NPS)
+    requiredThickness: 0.432,       // in
+    pipeSchedule: 80,               // schedule #
+    nominalWallThickness: 0.432,    // in
+    pipeMaterial: pipeMaterials["A 53 Gr.B"], // objek material
     flangeMaterial: "A 105",
   });
 
@@ -48,7 +49,7 @@ export default function PipeThicknessCalculatorPage() {
     return true;
   };
 
-  const result = useMemo(() => {
+  const result: PipeThicknessResult = useMemo(() => {
     if (!validateForm()) {
       return {
         requiredThickness: NaN,
@@ -68,14 +69,15 @@ export default function PipeThicknessCalculatorPage() {
   const inputCls =
     "w-full border border-slate-300 dark:border-slate-700 rounded-md bg-transparent px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600";
 
+  // number input
   const onNum =
     (name: keyof PipeThicknessInput) =>
     (e: ChangeEvent<HTMLInputElement>) => {
       const v = Number(String(e.target.value).replace(",", "."));
-      setForm((p) => ({ ...p, [name]: Number.isFinite(v) ? (v as any) : ((0 as unknown) as any) }));
+      setForm((p) => ({ ...p, [name]: (Number.isFinite(v) ? v : 0) as any }));
     };
 
-  // ✅ pastikan value <select> masuk sebagai number (bukan string)
+  // select → number
   const onSelNum =
     (name: keyof PipeThicknessInput) =>
     (e: ChangeEvent<HTMLSelectElement>) => {
@@ -96,6 +98,16 @@ export default function PipeThicknessCalculatorPage() {
         <motion.section variants={fadeIn} initial="hidden" animate="show" className="mt-8">
           <Card title="Document Info">
             <DocMetaForm value={doc} onChange={(p) => setDoc((d) => ({ ...d, ...p }))} />
+            {/* (opsional) deskripsi tambahan untuk PDF */}
+            <Field label="Description (for PDF header)">
+              <input
+                type="text"
+                className={inputCls}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Optional short subtitle for the PDF"
+              />
+            </Field>
           </Card>
         </motion.section>
 
@@ -121,7 +133,7 @@ export default function PipeThicknessCalculatorPage() {
                 </select>
               </Field>
 
-              <Field label="Corrosion Allowance">
+              <Field label="Corrosion Allowance (in)">
                 <input
                   type="number"
                   className={inputCls}
@@ -133,7 +145,7 @@ export default function PipeThicknessCalculatorPage() {
           </motion.div>
 
           <motion.div variants={fadeIn} className="space-y-6">
-            <Card title="Fluid Data">
+            <Card title="Fluid/Data">
               <Field label="Design Pressure (psig)">
                 <input
                   type="number"
@@ -147,7 +159,7 @@ export default function PipeThicknessCalculatorPage() {
                 <input type="number" className={inputCls} value={form.designTemp} onChange={onNum("designTemp")} />
               </Field>
 
-              <Field label="Nominal Wall Thickness (tn)">
+              <Field label="Nominal Wall Thickness (tn, in)">
                 <input
                   type="number"
                   className={inputCls}
@@ -175,7 +187,12 @@ export default function PipeThicknessCalculatorPage() {
               </button>
               <button
                 className="w-full rounded-md border border-blue-600 bg-white text-blue-700 dark:bg-slate-900/10 dark:text-blue-400 py-3 font-semibold hover:bg-blue-50 dark:hover:bg-slate-900/60"
-                onClick={() => printCalculationPdf(pipeThicknessPdfAdapter, form, result, { description, meta: doc })}
+                onClick={() =>
+                  printCalculationPdf(pipeThicknessPdfAdapter, form, result, {
+                    description,
+                    meta: doc,
+                  })
+                }
                 title="Export the calculation as a PDF"
               >
                 Print PDF
@@ -197,6 +214,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
+
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 md:p-6 bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm shadow-sm">
@@ -205,6 +223,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
     </div>
   );
 }
+
 function KV({ k, v, unit }: { k: string; v: number | string; unit?: string }) {
   return (
     <div className="flex items-center justify-between py-1 text-sm">
