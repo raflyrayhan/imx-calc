@@ -32,6 +32,8 @@ export const PIPING_CATEGORIES: Category[] = [
         { title: "Pump Sizing", href: "/piping/pump-sizing" },
         { title: "Compressor Rating", href: "/piping/compressor-rating" },
         { title: "Pressure Drop in Pipe & Fittings", href: "/piping/pressure-drop" },
+        { title: "Pipe Thickness Calculation", href: "/piping/pipe-thickness" },
+        
       // Add tools as you build them, for example:
       // { title: "Single-Phase Pressure Drop", href: "/piping/pressure-drop" },
     ],
@@ -45,6 +47,7 @@ export const PIPING_CATEGORIES: Category[] = [
     items: [
       { title: "Heat Exchanger Rating", href: "/piping/heat-exchanger-rating" },
       { title: "Heat Exchanger Analysis (ε-NTU)", href: "/piping/heat-exchanger-analysis" },
+      { title: "Insulation Heat Loss", href: "/piping/insulation-heat-loss" },
     ],
   },
   {

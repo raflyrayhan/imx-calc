@@ -1,8 +1,8 @@
-// Example datasource & generator:
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,21 +19,39 @@ enum Category {
   CODE_STANDARD
 }
 
-model Ebook {
-  id         String    @id @default(cuid())
-  slug       String    @unique
-  title      String
-  author     String?
-  year       Int?
-  pages      Int?
-  tags       String[]  @default([])
-  category   Category  @default(EBOOK)
+enum StorageProvider {
+  SUPABASE
+  DRIVE
+}
 
-  sizeBytes  BigInt
-  fileKey    String
-  coverKey   String?
+model Ebook {
+  id       String   @id @default(cuid())
+  slug     String   @unique
+  title    String
+  author   String?
+  year     Int?
+  pages    Int?
+  tags     String[] @default([])
+  category Category @default(EBOOK)
+
+  sizeBytes BigInt
+  fileKey   String? // legacy Supabase (opsional)
+  coverKey  String?
+
+  // Hybrid: Google Drive
+  driveFileId  String?
+  driveCoverId String?
+  mimeType     String?
+
+  // Penanda storage
+  storage StorageProvider @default(DRIVE)
+
   visibility Visibility @default(PRIVATE)
   version    Int        @default(1)
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
+
+  @@index([category, visibility, createdAt])
+  @@index([storage, createdAt])
+  @@index([driveFileId])
 }

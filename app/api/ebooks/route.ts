@@ -1,205 +1,157 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { NextRequest, NextResponse } from "next/server";
-import { Visibility } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+// app/api/ebooks/route.ts
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getDrive } from '@/lib/googleDrive';
+import { Readable } from 'node:stream';
+import type { Visibility, Category } from '@prisma/client';
 
-/* ------------------------------------------------------------------ */
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-/* ------------------------------------------------------------------ */
-const EBOOKS_BUCKET = process.env.NEXT_PUBLIC_EBOOKS_BUCKET || "E-books";
-const COVERS_BUCKET = process.env.NEXT_PUBLIC_EBOOK_COVERS_BUCKET || "ebook-covers";
-
-const CATEGORY_VALUES = ["EBOOK", "DATASHEET", "STANDARD_DRAWING", "CODE_STANDARD"] as const;
-type CategoryValue = typeof CATEGORY_VALUES[number];
-
-/* ------------------------------------------------------------------ */
-function sanitize<T>(obj: T): T {
-  return JSON.parse(
-    JSON.stringify(obj, (_k, v) => (typeof v === "bigint" ? v.toString() : v))
+const sanitize = <T,>(obj: T) =>
+  JSON.parse(
+    JSON.stringify(obj, (_k, v) => (typeof v === 'bigint' ? v.toString() : v))
   );
-}
 
-/* ------------------------------------------------------------------ */
-/*  Ensure the buckets exist and set a very large limit.                */
-/*  If the bucket already exists with a smaller limit you must either   */
-/*  drop it via SQL:  DROP storage.buckets WHERE id='E-books';          */
-/*  or change it via SQL:                                               */
-/*  UPDATE storage.buckets SET file_size_limit = 1024 * 1024 * 1024;    */
-/* ------------------------------------------------------------------ */
-async function ensureBuckets() {
-  const supabase = getSupabaseAdmin();
-  const upsertBucket = async (name: string, publicBucket = false) => {
-    const { data: exists } = await supabase.storage.getBucket(name);
-    if (exists) return;
+const slugify = (s: string) =>
+  s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-    await supabase.storage.createBucket(name, {
-      public: publicBucket,
-      fileSizeLimit: "1024gb", // <— effectively unlimited
-    });
-  };
-  await upsertBucket(EBOOKS_BUCKET, false);
-  await upsertBucket(COVERS_BUCKET, true);
-}
-
-/* ================================================================== */
-/*  GET  /api/ebooks                                                  */
-/* ================================================================== */
 export async function GET(req: Request) {
-  try {
-    const supabase = getSupabaseAdmin();
-    const { searchParams } = new URL(req.url);
-    const q = (searchParams.get("q") ?? "").toLowerCase();
-    const tag = searchParams.get("tag") ?? "";
-    const categoryParam = (searchParams.get("category") ?? "").toUpperCase();
-    const category = CATEGORY_VALUES.includes(categoryParam as CategoryValue)
-      ? (categoryParam as CategoryValue)
-      : undefined;
+  const { searchParams } = new URL(req.url);
+  const q = (searchParams.get('q') ?? '').trim();
+  const tag = (searchParams.get('tag') ?? '').trim();
+  const category = (searchParams.get('category') ?? '').trim() as Category | '';
 
-    const items = await prisma.ebook.findMany({
-      where: {
-        AND: [
-          q
-            ? {
-                OR: [
-                  { title: { contains: q, mode: "insensitive" } },
-                  { author: { contains: q, mode: "insensitive" } },
-                ],
-              }
-            : {},
-          tag ? { tags: { has: tag } } : {},
-          category ? { category: category as any } : {},
-        ],
-      },
-      orderBy: { createdAt: "desc" },
-      take: 300,
-    });
+  const items = await prisma.ebook.findMany({
+    where: {
+      AND: [
+        q
+          ? {
+              OR: [
+                { title: { contains: q, mode: 'insensitive' } },
+                { author: { contains: q, mode: 'insensitive' } },
+                { tags: { has: q } },
+              ],
+            }
+          : {},
+        tag ? { tags: { has: tag } } : {},
+        category ? { category } : {},
+      ],
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 300,
+  });
 
-    const withUrls = await Promise.all(
-      items.map(async (e) => {
-        const { data: signed, error } = await supabase.storage
-          .from(EBOOKS_BUCKET)
-          .createSignedUrl(e.fileKey, 3600);
-        const pdfUrl = !error ? signed?.signedUrl ?? null : null;
-        const coverUrl = e.coverKey
-          ? supabase.storage.from(COVERS_BUCKET).getPublicUrl(e.coverKey).data.publicUrl
-          : null;
-        return { ...e, pdfUrl, coverUrl };
-      })
-    );
+  const mapped = items.map((e) => {
+    let pdfUrl: string | null = null;
+    let coverUrl: string | null = null;
 
-    return NextResponse.json(sanitize(withUrls), {
-      headers: { "Cache-Control": "private, max-age=30" },
-    });
-  } catch (err: any) {
-    console.error("[GET /api/ebooks] error:", err?.message || err);
-    const msg =
-      err?.code === "P1001"
-        ? "Database unavailable"
-        : err?.message || "Unexpected error";
-    const status = err?.code === "P1001" ? 503 : 500;
-    return NextResponse.json({ error: msg }, { status });
-  }
+    if (e.storage === 'DRIVE' && e.driveFileId) {
+      const isPublic = e.visibility === 'PUBLIC';
+      pdfUrl = isPublic
+        ? `https://drive.google.com/uc?id=${e.driveFileId}&export=download`
+        : `/api/ebooks/${e.id}/download`;
+
+      // Cover otomatis (thumbnail halaman pertama PDF via proxy route)
+      coverUrl = `/api/ebooks/${e.id}/cover`;
+    } else if (e.coverKey) {
+      // Fallback untuk item lama Supabase yang punya coverKey
+      const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const bucket = process.env.NEXT_PUBLIC_SUPABASE_BUCKET;
+      if (base && bucket) {
+        coverUrl = `${base}/storage/v1/object/public/${bucket}/${e.coverKey}`;
+      }
+    }
+
+    return { ...e, pdfUrl, coverUrl };
+  });
+
+  return NextResponse.json(sanitize(mapped), {
+    headers: { 'Cache-Control': 'private, max-age=30' },
+  });
 }
 
-/* ================================================================== */
-/*  POST  /api/ebooks                                                 */
-/*  - Vercel body limit removed via config below.                     */
-/*  - Files are streamed to Supabase, never buffered fully.           */
-/* ================================================================== */
-export async function POST(req: NextRequest) {
-  try {
-    await ensureBuckets();
+export async function POST(req: Request) {
+  const form = await req.formData();
 
-    const supabase = getSupabaseAdmin();
-    const form = await req.formData();
-
-    const title = String(form.get("title") ?? "").trim();
-    if (!title) return NextResponse.json({ error: "title required" }, { status: 400 });
-
-    const author = (form.get("author") as string) || null;
-    const year = Number(form.get("year") || "") || null;
-
-    const tags = ((form.get("tags") as string) || "")
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
-
-    const rawCat = ((form.get("category") as string) || "").toUpperCase();
-    const category: CategoryValue = CATEGORY_VALUES.includes(rawCat as CategoryValue)
-      ? (rawCat as CategoryValue)
-      : "EBOOK";
-
-    const visibility = (form.get("visibility") as keyof typeof Visibility) || "PRIVATE";
-
-    const pdf = form.get("pdf") as File | null;
-    if (!pdf) return NextResponse.json({ error: "pdf file required" }, { status: 400 });
-
-    const cover = form.get("cover") as File | null;
-
-    /* ---------- create slug ---------- */
-    const slugify = (s: string) =>
-      s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    const base = slugify(title);
-    let finalSlug = base;
-    for (let i = 2; await prisma.ebook.findUnique({ where: { slug: finalSlug } }); i++) {
-      finalSlug = `${base}-${i}`;
-    }
-
-    const version = 1;
-    const vdir = `v${String(version).padStart(4, "0")}`;
-    const fileKey = `${finalSlug}/${vdir}/book.pdf`;
-    const coverKey = cover ? `${finalSlug}.jpg` : null;
-
-    /* ---------- upload PDF (stream) ---------- */
-    const pdfStream = pdf.stream();
-    const { data: pdfData, error: pdfErr } = await supabase.storage
-      .from(EBOOKS_BUCKET)
-      .upload(fileKey, pdfStream, {
-        contentType: pdf.type || "application/pdf",
-        upsert: false,
-      });
-    if (pdfErr) return NextResponse.json({ error: pdfErr.message }, { status: 500 });
-
-    /* ---------- upload cover (stream) ---------- */
-    if (cover && coverKey) {
-      const coverStream = cover.stream();
-      const { error: coverErr } = await supabase.storage
-        .from(COVERS_BUCKET)
-        .upload(coverKey, coverStream, {
-          contentType: cover.type || "image/jpeg",
-          upsert: true,
-        });
-      if (coverErr) return NextResponse.json({ error: coverErr.message }, { status: 500 });
-    }
-
-    /* ---------- save record ---------- */
-    const created = await prisma.ebook.create({
-      data: {
-        slug: finalSlug,
-        title,
-        author: author || undefined,
-        year,
-        tags,
-        category: category as any,
-        sizeBytes: BigInt(pdf.size),
-        fileKey,
-        coverKey: coverKey || undefined,
-        visibility: visibility === "PUBLIC" ? "PUBLIC" : "PRIVATE",
-        version,
-      },
-    });
-
-    return NextResponse.json(sanitize(created), { status: 201 });
-  } catch (err: any) {
-    console.error("[POST /api/ebooks] error:", err?.message || err);
-    const msg =
-      err?.code === "P1001"
-        ? "Database unavailable"
-        : err?.message || "Upload failed";
-    const status = err?.code === "P1001" ? 503 : 500;
-    return NextResponse.json({ error: msg }, { status });
+  const title = String(form.get('title') ?? '').trim();
+  const pdf = form.get('pdf') as File | null;
+  if (!title || !pdf) {
+    return NextResponse.json({ error: 'title/pdf required' }, { status: 400 });
   }
+
+  const author = (form.get('author') as string) || null;
+  const year = (form.get('year') as string) ? Number(form.get('year')) : null;
+  const tags = ((form.get('tags') as string) || '')
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean);
+  const visibility = ((form.get('visibility') as string) || 'PRIVATE') as Visibility;
+  const category = ((form.get('category') as string) || 'EBOOK') as Category;
+
+  // unique slug
+  const base = slugify(title);
+  let slug = base;
+  for (let i = 2; await prisma.ebook.findUnique({ where: { slug } }); i++) {
+    slug = `${base}-${i}`;
+  }
+
+  // Upload ke Google Drive
+  const drive = await getDrive();
+  const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID!;
+  const buf = Buffer.from(await pdf.arrayBuffer());
+
+  const { data: meta } = await drive.files.create(
+    {
+      requestBody: {
+        name: `${slug}.pdf`,
+        parents: [folderId],
+        mimeType: 'application/pdf',
+      },
+      media: { mimeType: 'application/pdf', body: Readable.from([buf]) as any },
+      fields: 'id, mimeType, size',
+      supportsAllDrives: true, // ← penting kalau folder adalah Shared Drive
+    } as any
+  );
+
+  // PUBLIC? anyone can read
+  if (visibility === 'PUBLIC') {
+    await drive.permissions.create(
+      {
+        fileId: meta.id!,
+        requestBody: { role: 'reader', type: 'anyone' },
+        supportsAllDrives: true,
+      } as any
+    );
+  }
+
+  const created = await prisma.ebook.create({
+    data: {
+      slug,
+      title,
+      author: author || undefined,
+      year: year || undefined,
+      tags,
+      category,
+      sizeBytes: BigInt(pdf.size),
+      storage: 'DRIVE',
+      driveFileId: meta.id!,
+      mimeType: meta.mimeType ?? 'application/pdf',
+      visibility,
+      version: 1,
+    },
+  });
+
+  const pdfUrl =
+    visibility === 'PUBLIC'
+      ? `https://drive.google.com/uc?id=${meta.id}&export=download`
+      : `/api/ebooks/${created.id}/download`;
+
+  // coverUrl langsung tersedia via proxy route (thumbnail bisa delay beberapa detik)
+  const coverUrl = `/api/ebooks/${created.id}/cover`;
+
+  return NextResponse.json(sanitize({ ...created, pdfUrl, coverUrl }), {
+    status: 201,
+  });
 }

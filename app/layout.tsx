@@ -2,6 +2,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import Navbar from "@/components/Breadcrumb";
+import HideOnRoutes from "@/components/HideOnRoutes";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,8 +25,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className={`${inter.className} bg-white text-slate-900`}>
+        <>
+      <HideOnRoutes>
         <Navbar />
+      </HideOnRoutes>
         {children}
+        </>
       </body>
     </html>
   );

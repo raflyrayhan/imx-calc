@@ -6,6 +6,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 
+// ⬇️ Firebase Auth (client)
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { clientAuth } from "@/lib/firebase/client";
+
 const NAV = [
   { label: "Home", href: "/" },
   { label: "E-books", href: "/ebook" },
@@ -19,8 +23,19 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
+  // auth state
+  const [user, setUser] = useState<null | { uid: string; email?: string | null }>(null);
+
   // Prevent hydration mismatch for active states
   useEffect(() => setMounted(true), []);
+
+  // Subscribe Firebase auth
+  useEffect(() => {
+    const unsub = onAuthStateChanged(clientAuth, (u) => {
+      setUser(u ? { uid: u.uid, email: u.email } : null);
+    });
+    return () => unsub();
+  }, []);
 
   // Close the mobile menu on route change
   useEffect(() => {
@@ -52,6 +67,16 @@ export default function Navbar() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
+  async function doLogout() {
+    try {
+      // hapus session cookie (server) + signOut Firebase (client)
+      await fetch("/api/auth/sessionLogout", { method: "POST" });
+      await signOut(clientAuth);
+    } finally {
+      window.location.href = "/login";
+    }
+  }
+
   return (
     <header className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-4">
@@ -60,7 +85,7 @@ export default function Navbar() {
           <div className="flex items-center min-w-0">
             <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="Go to Home">
               <Image
-                src="/imx-logo-nb.png" // ← your logo path
+                src="/imx-logo-nb.png"
                 alt="Brand logo"
                 width={36}
                 height={36}
@@ -94,6 +119,27 @@ export default function Navbar() {
               })}
             </ul>
           </nav>
+
+          {/* Desktop: auth actions */}
+          <div className="hidden md:flex items-center gap-2">
+            {user ? (
+              <button
+                onClick={doLogout}
+                className="px-2 py-1 rounded-md transition text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                aria-label="Logout"
+                title={user.email || "Logout"}
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="px-2 py-1 rounded-md transition text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+              >
+                Login
+              </Link>
+            )}
+          </div>
 
           {/* Mobile hamburger */}
           <button
@@ -144,6 +190,30 @@ export default function Navbar() {
                     </li>
                   );
                 })}
+
+                {/* Divider */}
+                <li className="my-1">
+                  <div className="h-px bg-slate-200 mx-3" />
+                </li>
+
+                {/* Mobile: auth action */}
+                <li>
+                  {user ? (
+                    <button
+                      onClick={doLogout}
+                      className="w-full text-left block px-4 py-3 text-sm rounded-lg mx-1 text-slate-500 hover:bg-slate-100"
+                    >
+                      Logout
+                    </button>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="block px-4 py-3 text-sm rounded-lg mx-1 text-slate-700 hover:bg-slate-100"
+                    >
+                      Login
+                    </Link>
+                  )}
+                </li>
               </ul>
             </nav>
           </div>
