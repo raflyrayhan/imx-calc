@@ -1,17 +1,18 @@
+// app/api/ebooks/[key]/download/route.ts
 import { prisma } from "@/lib/prisma";
 import { getDrive } from "@/lib/googleDrive";
-import { cookies } from "next/headers";
+import { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function authorizedByApiKey(req: Request) {
+function authorizedByApiKey(req: NextRequest) {
   const expected = process.env.IMX_EBOOK_API_KEY || "";
   if (!expected) return false;
 
-  // cookie
-  const cookieToken = cookies().get("imx_ebook_key")?.value;
+  // Cookie: imx_ebook_key
+  const cookieToken = req.cookies.get("imx_ebook_key")?.value;
   if (cookieToken && cookieToken === expected) return true;
 
   // Authorization: Bearer <token>
@@ -22,13 +23,17 @@ function authorizedByApiKey(req: Request) {
   return false;
 }
 
-async function isAuthorized(req: Request) {
+async function isAuthorized(req: NextRequest) {
   if (process.env.IMX_EBOOK_DEV_OPEN === "true") return true;
   return authorizedByApiKey(req);
 }
 
-export async function GET(req: Request, { params }: { params: { key: string } }) {
-  const key = decodeURIComponent(params.key);
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ key: string }> } // <-- penting
+) {
+  const { key: rawKey } = await params;            // <-- await params
+  const key = decodeURIComponent(rawKey);
 
   const row =
     (await prisma.ebook.findUnique({ where: { id: key } })) ??
