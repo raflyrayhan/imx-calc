@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+// app/api/ebooks/[key]/route.ts
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getDrive } from "@/lib/googleDrive";
 
@@ -6,12 +7,15 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function PATCH(req: Request, { params }: { params: { key: string } }) {
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ key: string }> }
+) {
   try {
-    const key = decodeURIComponent(params.key);
+    const { key: rawKey } = await params; // await params
+    const key = decodeURIComponent(rawKey);
     const body = await req.json().catch(() => ({} as any));
     const tagText: string = body?.tags ?? "";
-
     const tags = String(tagText).split(",").map(t => t.trim()).filter(Boolean);
 
     const row =
@@ -30,14 +34,18 @@ export async function PATCH(req: Request, { params }: { params: { key: string } 
   } catch (err: any) {
     return NextResponse.json(
       { error: err?.message || "Failed to update tags" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
 
-export async function DELETE(_req: Request, { params }: { params: { key: string } }) {
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ key: string }> }
+) {
   try {
-    const key = decodeURIComponent(params.key);
+    const { key: rawKey } = await params; // await params
+    const key = decodeURIComponent(rawKey);
 
     const row =
       (await prisma.ebook.findUnique({ where: { id: key } })) ??
@@ -57,6 +65,9 @@ export async function DELETE(_req: Request, { params }: { params: { key: string 
     await prisma.ebook.delete({ where: { id: row.id } });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Delete failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: err?.message || "Delete failed" },
+      { status: 500 }
+    );
   }
 }
