@@ -10,11 +10,12 @@ import {
   calculateMaxAllowablePressure,
   calculateHydrotestPressure,
   validateThickness,
+  pipeMaterials,            // ✅ ambil DB material
+  type PipeThicknessInput,  // ✅ tipe input yang diminta kalkulator
 } from "@/lib/pipe-thickness-calculator";
 import { pipeThicknessPdfAdapter } from "@/lib/pdf-adapters/pipe-thickness";
-import { pipeSchedules } from "@/lib/pipe-schedule-db";
+import { pipeSchedules } from "@/lib/pipe-schedule-db"; // biarkan seperti asal
 
-// (opsional) ketik animasi biar TS senang
 const fadeIn: Variants = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.08 } },
@@ -26,8 +27,8 @@ export default function PipeThicknessCalculatorPage() {
     documentTitle: "Pipe Thickness Calculation",
   });
 
-  // ✅ Tambahkan 2 properti yang hilang: pipeMaterial & flangeMaterial
-  const [form, setForm] = useState({
+  // ✅ ketik state sebagai PipeThicknessInput dan isi material pakai objek
+  const [form, setForm] = useState<PipeThicknessInput>({
     designPressure: 400,            // psig
     designTemp: 120,                // °F
     corrosionAllowance: 13,         // inches
@@ -36,8 +37,8 @@ export default function PipeThicknessCalculatorPage() {
     requiredThickness: 0.432,       // inches
     pipeSchedule: 80,               // schedule
     nominalWallThickness: 0.432,    // inches
-    pipeMaterial: "ASTM A106 Gr B", // default aman/umum
-    flangeMaterial: "ASTM A105",    // default aman/umum
+    pipeMaterial: pipeMaterials["A 53 Gr.B"],
+    flangeMaterial: "A 105",
   });
 
   const [description, setDescription] = useState("");
@@ -46,9 +47,6 @@ export default function PipeThicknessCalculatorPage() {
     if (isNaN(form.designPressure) || isNaN(form.nps) || isNaN(form.requiredThickness)) return false;
     return true;
   };
-
-  // 👇 Objek input yang lengkap tipenya untuk fungsi kalkulasi
-  const inputForCalc = form; // sudah lengkap propertinya
 
   const result = useMemo(() => {
     if (!validateForm()) {
@@ -60,27 +58,29 @@ export default function PipeThicknessCalculatorPage() {
       };
     }
     return {
-      requiredThickness: calculateRequiredThickness(inputForCalc),
-      maxAllowablePressure: calculateMaxAllowablePressure(inputForCalc),
-      hydrotestPressure: calculateHydrotestPressure(inputForCalc),
-      warnings: [validateThickness(inputForCalc)],
+      requiredThickness: calculateRequiredThickness(form),
+      maxAllowablePressure: calculateMaxAllowablePressure(form),
+      hydrotestPressure: calculateHydrotestPressure(form),
+      warnings: [validateThickness(form)],
     };
-  }, [inputForCalc]);
+  }, [form]);
 
   const inputCls =
     "w-full border border-slate-300 dark:border-slate-700 rounded-md bg-transparent px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600";
 
   const onNum =
-    (name: string) =>
+    (name: keyof PipeThicknessInput) =>
     (e: ChangeEvent<HTMLInputElement>) => {
       const v = Number(String(e.target.value).replace(",", "."));
-      setForm((p) => ({ ...p, [name]: Number.isFinite(v) ? v : 0 }));
+      setForm((p) => ({ ...p, [name]: Number.isFinite(v) ? (v as any) : ((0 as unknown) as any) }));
     };
 
-  const onSel =
-    (name: string) =>
+  // ✅ pastikan value <select> masuk sebagai number (bukan string)
+  const onSelNum =
+    (name: keyof PipeThicknessInput) =>
     (e: ChangeEvent<HTMLSelectElement>) => {
-      setForm((p) => ({ ...p, [name]: (e.target.value as any) }));
+      const v = Number(e.target.value);
+      setForm((p) => ({ ...p, [name]: (Number.isFinite(v) ? v : 0) as any }));
     };
 
   return (
@@ -103,7 +103,7 @@ export default function PipeThicknessCalculatorPage() {
           <motion.div variants={fadeIn} className="space-y-6">
             <Card title="Pipe Data">
               <Field label="Nominal Pipe Size (NPS)">
-                <select className={inputCls} value={form.nps} onChange={onSel("nps")}>
+                <select className={inputCls} value={form.nps} onChange={onSelNum("nps")}>
                   {pipeSchedules.map((schedule) => (
                     <option key={schedule.schedule} value={schedule.schedule}>
                       {schedule.schedule} — {schedule.thickness} inches
@@ -113,7 +113,7 @@ export default function PipeThicknessCalculatorPage() {
               </Field>
 
               <Field label="Pipe Schedule">
-                <select className={inputCls} value={form.pipeSchedule} onChange={onSel("pipeSchedule")}>
+                <select className={inputCls} value={form.pipeSchedule} onChange={onSelNum("pipeSchedule")}>
                   <option value={10}>10</option>
                   <option value={20}>20</option>
                   <option value={40}>40</option>
@@ -135,7 +135,12 @@ export default function PipeThicknessCalculatorPage() {
           <motion.div variants={fadeIn} className="space-y-6">
             <Card title="Fluid Data">
               <Field label="Design Pressure (psig)">
-                <input type="number" className={inputCls} value={form.designPressure} onChange={onNum("designPressure")} />
+                <input
+                  type="number"
+                  className={inputCls}
+                  value={form.designPressure}
+                  onChange={onNum("designPressure")}
+                />
               </Field>
 
               <Field label="Design Temperature (°F)">
@@ -183,7 +188,7 @@ export default function PipeThicknessCalculatorPage() {
   );
 }
 
-// Helper Components (tidak berubah)
+// Helper Components
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
