@@ -7,26 +7,24 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+// Perhatikan: params adalah Promise<{ key: string }>
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
   try {
-    const key = decodeURIComponent(params.key);
+    const { key: rawKey } = await params;           // ✅ await params
+    const key = decodeURIComponent(rawKey);
 
     const row =
       (await prisma.ebook.findUnique({ where: { id: key } })) ??
       (await prisma.ebook.findUnique({ where: { slug: key } }));
 
-    if (!row?.driveFileId) {
-      return new Response("Not found", { status: 404 });
-    }
+    if (!row?.driveFileId) return new Response("Not found", { status: 404 });
 
     const { drive, auth } = await getDriveWithAuth();
 
     let thumbUrl: string | undefined;
-
-    // Retry kecil untuk tunggu thumbnail Drive siap
     for (let i = 0; i < 5; i++) {
       const meta = await drive.files.get({
         fileId: row.driveFileId,
@@ -37,24 +35,19 @@ export async function GET(
       await new Promise((r) => setTimeout(r, 700));
     }
 
-    // Tidak ada thumbnail → 204 No Content
-    if (!thumbUrl) {
-      return new Response(null, { status: 204 });
-    }
+    if (!thumbUrl) return new Response(null, { status: 204 });
 
     const headers = await auth.getRequestHeaders();
     const res = await fetch(thumbUrl, {
       headers: { Authorization: headers.Authorization! },
     });
 
-    if (!res.ok || !res.body) {
-      return new Response("Failed", { status: 502 });
-    }
+    if (!res.ok || !res.body) return new Response("Failed", { status: 502 });
 
     return new Response(res.body, {
       headers: {
         "Content-Type": res.headers.get("content-type") || "image/jpeg",
-        "Cache-Control": "public, max-age=86400", // 1 hari
+        "Cache-Control": "public, max-age=86400",
       },
     });
   } catch (err) {
