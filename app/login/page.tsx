@@ -1,42 +1,37 @@
 // app/login/page.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, ChangeEvent, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, type Variants } from "framer-motion";
 import { LogIn, Eye, EyeOff, Mail, Lock, Loader2, Chrome, ArrowRight } from "lucide-react";
 import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
 import { clientAuth } from "@/lib/firebase/client";
 
-// --- Animations: slide-in from the left ---
-// Typed as Variants to satisfy TS & framer-motion
+// --- Animations ---
 const pageEnter: Variants = {
   hidden: { opacity: 0, x: -40 },
   show: {
     opacity: 1,
     x: 0,
-    transition: {
-      duration: 0.4,
-      ease: "easeOut",
-      when: "beforeChildren",
-      staggerChildren: 0.06,
-    },
+    transition: { duration: 0.4, ease: "easeOut", when: "beforeChildren", staggerChildren: 0.06 },
   },
 };
-
 const itemEnter: Variants = {
   hidden: { opacity: 0, x: -14 },
-  show: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.28, ease: "easeOut" },
-  },
+  show: { opacity: 1, x: 0, transition: { duration: 0.28, ease: "easeOut" } },
 };
 
-export default function LoginPage() {
-  const router = useRouter();
+// --- Gate yang membaca query param 'next' ---
+function NextParamGate() {
   const sp = useSearchParams();
   const next = sp.get("next") || "/";
+  return <LoginUI next={next} />;
+}
+
+// --- Komponen UI utama (tidak lagi memanggil useSearchParams) ---
+function LoginUI({ next }: { next: string }) {
+  const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
@@ -204,10 +199,7 @@ export default function LoginPage() {
               </div>
 
               {err && (
-                <div
-                  role="alert"
-                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 shadow-sm"
-                >
+                <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 shadow-sm">
                   {err}
                 </div>
               )}
@@ -237,5 +229,14 @@ export default function LoginPage() {
         </motion.div>
       </section>
     </main>
+  );
+}
+
+// --- Export default page dibungkus Suspense ---
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-svh flex items-center justify-center">Loading…</div>}>
+      <NextParamGate />
+    </Suspense>
   );
 }
