@@ -1,14 +1,21 @@
+// app/piping/pipe-thickness/page.tsx
 "use client";
 
 import { useMemo, useState, ChangeEvent } from "react";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import DocMetaForm from "@/components/DocMetaForm";
 import { printCalculationPdf } from "@/lib/pdf";
-import { calculateRequiredThickness, calculateMaxAllowablePressure, calculateHydrotestPressure, validateThickness } from "@/lib/pipe-thickness-calculator";
+import {
+  calculateRequiredThickness,
+  calculateMaxAllowablePressure,
+  calculateHydrotestPressure,
+  validateThickness,
+} from "@/lib/pipe-thickness-calculator";
 import { pipeThicknessPdfAdapter } from "@/lib/pdf-adapters/pipe-thickness";
-import { pipeSchedules } from "@/lib/pipe-schedule-db"; // Explicitly using pipe schedule data
+import { pipeSchedules } from "@/lib/pipe-schedule-db";
 
-const fadeIn = {
+// (opsional) ketik animasi biar TS senang
+const fadeIn: Variants = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.05, delayChildren: 0.08 } },
 };
@@ -19,25 +26,29 @@ export default function PipeThicknessCalculatorPage() {
     documentTitle: "Pipe Thickness Calculation",
   });
 
+  // ✅ Tambahkan 2 properti yang hilang: pipeMaterial & flangeMaterial
   const [form, setForm] = useState({
-    designPressure: 400, // psig
-    designTemp: 120, // °F
-    corrosionAllowance: 13, // inches
-    flangeRating: 900, // lb
-    nps: 6, // Nominal Pipe Size (inches)
-    requiredThickness: 0.432, // inches
-    pipeSchedule: 80, // Pipe schedule (selected schedule)
-    nominalWallThickness: 0.432, // inches
+    designPressure: 400,            // psig
+    designTemp: 120,                // °F
+    corrosionAllowance: 13,         // inches
+    flangeRating: 900,              // lb
+    nps: 6,                         // inches (NPS)
+    requiredThickness: 0.432,       // inches
+    pipeSchedule: 80,               // schedule
+    nominalWallThickness: 0.432,    // inches
+    pipeMaterial: "ASTM A106 Gr B", // default aman/umum
+    flangeMaterial: "ASTM A105",    // default aman/umum
   });
 
   const [description, setDescription] = useState("");
 
   const validateForm = () => {
-    if (isNaN(form.designPressure) || isNaN(form.nps) || isNaN(form.requiredThickness)) {
-      return false;
-    }
+    if (isNaN(form.designPressure) || isNaN(form.nps) || isNaN(form.requiredThickness)) return false;
     return true;
   };
+
+  // 👇 Objek input yang lengkap tipenya untuk fungsi kalkulasi
+  const inputForCalc = form; // sudah lengkap propertinya
 
   const result = useMemo(() => {
     if (!validateForm()) {
@@ -48,25 +59,29 @@ export default function PipeThicknessCalculatorPage() {
         warnings: ["Please provide valid inputs for all fields."],
       };
     }
-
     return {
-      requiredThickness: calculateRequiredThickness(form),
-      maxAllowablePressure: calculateMaxAllowablePressure(form),
-      hydrotestPressure: calculateHydrotestPressure(form),
-      warnings: [validateThickness(form)],
+      requiredThickness: calculateRequiredThickness(inputForCalc),
+      maxAllowablePressure: calculateMaxAllowablePressure(inputForCalc),
+      hydrotestPressure: calculateHydrotestPressure(inputForCalc),
+      warnings: [validateThickness(inputForCalc)],
     };
-  }, [form]);
+  }, [inputForCalc]);
 
-  const inputCls = "w-full border border-slate-300 dark:border-slate-700 rounded-md bg-transparent px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600";
+  const inputCls =
+    "w-full border border-slate-300 dark:border-slate-700 rounded-md bg-transparent px-3 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600";
 
-  const onNum = (name: string) => (e: ChangeEvent<HTMLInputElement>) => {
-    const v = Number(String(e.target.value).replace(",", "."));
-    setForm((p) => ({ ...p, [name]: Number.isFinite(v) ? v : 0 }));
-  };
+  const onNum =
+    (name: string) =>
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const v = Number(String(e.target.value).replace(",", "."));
+      setForm((p) => ({ ...p, [name]: Number.isFinite(v) ? v : 0 }));
+    };
 
-  const onSel = (name: string) => (e: ChangeEvent<HTMLSelectElement>) => {
-    setForm((p) => ({ ...p, [name]: e.target.value as any }));
-  };
+  const onSel =
+    (name: string) =>
+    (e: ChangeEvent<HTMLSelectElement>) => {
+      setForm((p) => ({ ...p, [name]: (e.target.value as any) }));
+    };
 
   return (
     <main className="min-h-screen">
@@ -107,7 +122,12 @@ export default function PipeThicknessCalculatorPage() {
               </Field>
 
               <Field label="Corrosion Allowance">
-                <input type="number" className={inputCls} value={form.corrosionAllowance} onChange={onNum("corrosionAllowance")} />
+                <input
+                  type="number"
+                  className={inputCls}
+                  value={form.corrosionAllowance}
+                  onChange={onNum("corrosionAllowance")}
+                />
               </Field>
             </Card>
           </motion.div>
@@ -123,7 +143,12 @@ export default function PipeThicknessCalculatorPage() {
               </Field>
 
               <Field label="Nominal Wall Thickness (tn)">
-                <input type="number" className={inputCls} value={form.nominalWallThickness} onChange={onNum("nominalWallThickness")} />
+                <input
+                  type="number"
+                  className={inputCls}
+                  value={form.nominalWallThickness}
+                  onChange={onNum("nominalWallThickness")}
+                />
               </Field>
             </Card>
           </motion.div>
@@ -145,9 +170,7 @@ export default function PipeThicknessCalculatorPage() {
               </button>
               <button
                 className="w-full rounded-md border border-blue-600 bg-white text-blue-700 dark:bg-slate-900/10 dark:text-blue-400 py-3 font-semibold hover:bg-blue-50 dark:hover:bg-slate-900/60"
-                onClick={() =>
-                  printCalculationPdf(pipeThicknessPdfAdapter, form, result, { description, meta: doc })
-                }
+                onClick={() => printCalculationPdf(pipeThicknessPdfAdapter, form, result, { description, meta: doc })}
                 title="Export the calculation as a PDF"
               >
                 Print PDF
@@ -160,8 +183,7 @@ export default function PipeThicknessCalculatorPage() {
   );
 }
 
-// Helper Components
-
+// Helper Components (tidak berubah)
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
@@ -170,7 +192,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
-
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-slate-200 dark:border-slate-800 p-5 md:p-6 bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm shadow-sm">
@@ -179,12 +200,13 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
     </div>
   );
 }
-
 function KV({ k, v, unit }: { k: string; v: number | string; unit?: string }) {
   return (
     <div className="flex items-center justify-between py-1 text-sm">
       <span className="text-slate-600 dark:text-slate-300">{k}</span>
-      <span className="font-semibold text-slate-900 dark:text-white">{v} {unit ?? ""}</span>
+      <span className="font-semibold text-slate-900 dark:text-white">
+        {v} {unit ?? ""}
+      </span>
     </div>
   );
 }
