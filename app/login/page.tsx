@@ -113,9 +113,6 @@ export default function LoginPage() {
             <span className="block text-indigo-600"><strong className="text-indigo-600">IMX</strong> Engineering Resources</span>
           </motion.h1>
 
-          <motion.p variants={itemEnter} className="mt-2 text-sm text-slate-600">
-            Use Google or your email & password to continue.
-          </motion.p>
 
           {/* OAuth button */}
           <motion.div variants={itemEnter} className="mt-6">
@@ -160,9 +157,7 @@ export default function LoginPage() {
                     aria-describedby="email-help"
                   />
                 </div>
-                <p id="email-help" className="mt-1 text-[11px] text-slate-500">
-                  Use your corporate email if possible.
-                </p>
+               
               </div>
 
               <div>
