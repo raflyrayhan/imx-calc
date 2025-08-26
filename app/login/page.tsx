@@ -3,23 +3,34 @@
 
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { LogIn, Eye, EyeOff, Mail, Lock, Loader2, Chrome, ArrowRight } from "lucide-react";
 import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "firebase/auth";
 import { clientAuth } from "@/lib/firebase/client";
 
-// Animation presets — slide in from the left (no background styling)
-const pageEnter = {
+// --- Animations: slide-in from the left ---
+// Typed as Variants to satisfy TS & framer-motion
+const pageEnter: Variants = {
   hidden: { opacity: 0, x: -40 },
   show: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.4, ease: "easeOut", when: "beforeChildren", staggerChildren: 0.06 },
+    transition: {
+      duration: 0.4,
+      ease: "easeOut",
+      when: "beforeChildren",
+      staggerChildren: 0.06,
+    },
   },
 };
-const itemEnter = {
+
+const itemEnter: Variants = {
   hidden: { opacity: 0, x: -14 },
-  show: { opacity: 1, x: 0, transition: { duration: 0.28, ease: "easeOut" } },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.28, ease: "easeOut" },
+  },
 };
 
 export default function LoginPage() {
@@ -100,19 +111,16 @@ export default function LoginPage() {
             initial={{ scaleY: 0 }}
             animate={{ scaleY: 1 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
-            className="absolute left-0 top-0 h-full w-4.5 origin-top rounded-l-2xl bg-gradient-to-b from-indigo-600 to-indigo-400"
+            className="absolute left-0 top-0 h-full w-[18px] origin-top rounded-l-2xl bg-gradient-to-b from-indigo-600 to-indigo-400"
           />
 
           {/* Header */}
-
-          <motion.h1
-            variants={itemEnter}
-            className="text-2xl font-semibold tracking-tight text-slate-900"
-          >
+          <motion.h1 variants={itemEnter} className="text-2xl font-semibold tracking-tight text-slate-900">
             Sign in to
-            <span className="block text-indigo-600"><strong className="text-indigo-600">IMX</strong> Engineering Resources</span>
+            <span className="block text-indigo-600">
+              <strong className="text-indigo-600">IMX</strong> Engineering Resources
+            </span>
           </motion.h1>
-
 
           {/* OAuth button */}
           <motion.div variants={itemEnter} className="mt-6">
@@ -157,7 +165,6 @@ export default function LoginPage() {
                     aria-describedby="email-help"
                   />
                 </div>
-               
               </div>
 
               <div>
@@ -197,7 +204,10 @@ export default function LoginPage() {
               </div>
 
               {err && (
-                <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 shadow-sm">
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 shadow-sm"
+                >
                   {err}
                 </div>
               )}
@@ -214,8 +224,15 @@ export default function LoginPage() {
           </motion.form>
 
           <motion.p variants={itemEnter} className="mt-6 text-center text-xs text-slate-500">
-            By continuing, you agree to our <a className="underline underline-offset-2 hover:no-underline" href="/legal/terms">Terms</a> &{" "}
-            <a className="underline underline-offset-2 hover:no-underline" href="/legal/privacy">Privacy</a>.
+            By continuing, you agree to our{" "}
+            <a className="underline underline-offset-2 hover:no-underline" href="/legal/terms">
+              Terms
+            </a>{" "}
+            &{" "}
+            <a className="underline underline-offset-2 hover:no-underline" href="/legal/privacy">
+              Privacy
+            </a>
+            .
           </motion.p>
         </motion.div>
       </section>
