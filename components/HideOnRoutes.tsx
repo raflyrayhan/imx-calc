@@ -10,7 +10,7 @@ const HIDE_SET = new Set<string>([
 export default function HideOnRoutes({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   if (Array.from(HIDE_SET).some(p => pathname === p || pathname.startsWith(p + "/"))) {
-    return null; // sembunyikan pada rute-rute tersebut
+    return null; 
   }
   return <>{children}</>;
 }

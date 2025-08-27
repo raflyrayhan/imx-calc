@@ -9,7 +9,7 @@ type ServiceAccountEnv = {
 };
 
 function loadServiceAccountFromEnv(): ServiceAccountEnv | null {
-  // Opsi A: satu ENV berisi JSON service account
+
   const json = process.env.FIREBASE_SERVICE_ACCOUNT || process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (json) {
     try {
@@ -22,11 +22,10 @@ function loadServiceAccountFromEnv(): ServiceAccountEnv | null {
         privateKey: pk,
       };
     } catch {
-      // abaikan, lanjut ke opsi B
+      
     }
   }
 
-  // Opsi B: ENV terpisah
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
   if (privateKey?.includes("\\n")) privateKey = privateKey.replace(/\\n/g, "\n");
 
@@ -48,7 +47,7 @@ export function getAdminAuth(): Auth {
     const sa = loadServiceAccountFromEnv();
 
     if (sa?.projectId && sa.clientEmail && sa.privateKey) {
-      // ✅ hanya pakai cert() kalau key lengkap
+     
       initializeApp({
         credential: cert({
           projectId: sa.projectId,
@@ -57,7 +56,7 @@ export function getAdminAuth(): Auth {
         }),
       });
     } else {
-      // ✅ fallback aman (mis. pakai Workload Identity / ADC)
+
       initializeApp({ credential: applicationDefault() });
     }
   }
@@ -66,5 +65,5 @@ export function getAdminAuth(): Auth {
   return _auth;
 }
 
-// Untuk compat dengan import yang sudah ada
+
 export const adminAuth = getAdminAuth();

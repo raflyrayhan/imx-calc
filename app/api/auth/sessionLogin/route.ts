@@ -10,14 +10,14 @@ export async function POST(req: NextRequest) {
     const { idToken } = await req.json();
     if (!idToken) return new Response("Bad Request", { status: 400 });
 
-    // verifikasi ID token dari client
+    // Verify ID token
     const decoded = await adminAuth.verifyIdToken(idToken, true);
 
-    // buat session cookie httpOnly
+    // Create session cookie
     const expiresIn = EXPIRES_DAYS * 24 * 60 * 60 * 1000; // ms
     const sessionCookie = await adminAuth.createSessionCookie(idToken, { expiresIn });
 
-    // buat response dan SET cookie pada response (bukan lewat cookies())
+    // Prepare response and set the session cookie
     const res = NextResponse.json({ ok: true, uid: decoded.uid, email: decoded.email });
     res.cookies.set({
       name: COOKIE_NAME,
@@ -25,12 +25,13 @@ export async function POST(req: NextRequest) {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
-      maxAge: Math.floor(expiresIn / 1000), // detik
+      maxAge: Math.floor(expiresIn / 1000), // seconds
       path: "/",
     });
 
     return res;
-  } catch {
-    return new Response("Unauthorized", { status: 401 });
+  } catch (error) {
+    console.error("Session creation failed:", error);
+    return new Response("Unauthorized: " + error.message, { status: 401 });
   }
 }

@@ -22,14 +22,14 @@ const itemEnter: Variants = {
   show: { opacity: 1, x: 0, transition: { duration: 0.28, ease: "easeOut" } },
 };
 
-// --- Gate yang membaca query param 'next' ---
+
 function NextParamGate() {
   const sp = useSearchParams();
   const next = sp.get("next") || "/";
   return <LoginUI next={next} />;
 }
 
-// --- Komponen UI utama (tidak lagi memanggil useSearchParams) ---
+
 function LoginUI({ next }: { next: string }) {
   const router = useRouter();
 

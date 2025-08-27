@@ -1,7 +1,0 @@
-In case pushed for production, Delete this File!
-
-yang masih merah-merah:
-WbsEditor.tsx
-wbs-editor/page.tsx
-banyak
-

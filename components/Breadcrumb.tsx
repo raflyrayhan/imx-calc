@@ -125,11 +125,11 @@ export default function Navbar() {
             {user ? (
               <button
                 onClick={doLogout}
-                className="px-2 py-1 rounded-md transition text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
+                className="px-2 py-1 rounded-md text-sm transition text-slate-200 bg-red-300 hover:text-slate-200 hover:bg-red-600/70"
                 aria-label="Logout"
                 title={user.email || "Logout"}
               >
-                Logout
+                logout
               </button>
             ) : (
               <Link
@@ -164,7 +164,7 @@ export default function Navbar() {
             aria-hidden="true"
             onClick={() => setOpen(false)}
           />
-          {/* Panel */}
+        
           <div
             ref={panelRef}
             id="mobile-menu"
@@ -191,7 +191,7 @@ export default function Navbar() {
                   );
                 })}
 
-                {/* Divider */}
+         
                 <li className="my-1">
                   <div className="h-px bg-slate-200 mx-3" />
                 </li>
@@ -201,7 +201,7 @@ export default function Navbar() {
                   {user ? (
                     <button
                       onClick={doLogout}
-                      className="w-full text-left block px-4 py-3 text-sm rounded-lg mx-1 text-slate-500 hover:bg-slate-100"
+                      className="w-full text-left px-4 py-3 text-sm rounded-lg mx-1 text-slate-500 bg-red-600/50 hover:bg-red-500"
                     >
                       Logout
                     </button>
